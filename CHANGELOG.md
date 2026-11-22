@@ -3,6 +3,11 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.0.1 (2026-11-22)
+
+- A progress bar shows the online link being set up: it fills during the first-time download, then
+  moves while connecting or reconnecting. The QR window shows one too while it waits for the link.
+
 ## 1.0.0 (2026-11-22)
 
 First release.

@@ -112,8 +112,16 @@ class QRPanel(ctk.CTkFrame):
         self.connection.grid(row=0, column=0, sticky="w")
         self.connection_text = WrapLabel(net.body, "", size=13)
         self.connection_text.grid(row=1, column=0, sticky="ew", pady=(8, 0))
-        self.status = StatusLine(net.body)
-        self.status.grid(row=2, column=0, sticky="ew", pady=(14, 0))
+        status_box = ctk.CTkFrame(net.body, fg_color="transparent")
+        status_box.grid(row=2, column=0, sticky="ew", pady=(14, 0))
+        status_box.grid_columnconfigure(0, weight=1)
+        self.status = StatusLine(status_box)
+        self.status.grid(row=0, column=0, sticky="ew")
+        # Moves while the online link is being set up, so it's clear the app is working on it.
+        self.progress = ctk.CTkProgressBar(status_box, height=6, corner_radius=3, progress_color=theme.ACCENT,
+                                           fg_color=theme.SOFT, mode="indeterminate")
+        self.progress.grid(row=1, column=0, sticky="ew", pady=(10, 2))
+        self.progress.grid_remove()
 
         # Wi-Fi only: which address of this laptop goes in the QR code
         self.wifi_box = ctk.CTkFrame(net.body, fg_color="transparent")
@@ -199,11 +207,19 @@ class QRPanel(ctk.CTkFrame):
         self.address.configure(values=values)
         self.address.set(self.settings.host_override or AUTO)
 
+        progress = None  # None = hidden, "busy" = moving, or a number 0-1 for the download
         if self.server_error:
             self.status.show("error", self.server_error)
         elif online:
             tunnel = self.get_tunnel()
             state = tunnel.state if tunnel else tunnel_mod.STARTING
+            if state == tunnel_mod.DOWNLOADING:
+                try:
+                    progress = int(self._tunnel_detail or 0) / 100
+                except ValueError:
+                    progress = 0.0
+            elif state != tunnel_mod.ONLINE:
+                progress = "busy"  # connecting, or reconnecting after a problem
             if state == tunnel_mod.ONLINE:
                 self.status.show("ok", f"Online. Phones can use any Wi-Fi or mobile data.  {tunnel.url}")
             elif state == tunnel_mod.DOWNLOADING:
@@ -219,6 +235,22 @@ class QRPanel(ctk.CTkFrame):
         else:
             base = netutil.base_url(self.settings.server_port, self.settings.host_override)
             self.status.show("ok", f"Guest page is running at {base}")
+        self._show_progress(progress)
+
+    def _show_progress(self, progress) -> None:
+        if progress is None:
+            self.progress.stop()
+            self.progress.grid_remove()
+            return
+        self.progress.grid()
+        if progress == "busy":
+            if self.progress.cget("mode") != "indeterminate":
+                self.progress.configure(mode="indeterminate")
+            self.progress.start()
+        else:
+            self.progress.stop()
+            self.progress.configure(mode="determinate")
+            self.progress.set(max(0.0, min(1.0, progress)))
 
     # ------------------------------------------------------------ permanent address
     def _toggle_permanent(self) -> None:

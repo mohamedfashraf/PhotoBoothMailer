@@ -10,7 +10,7 @@ from pathlib import Path
 
 APP_NAME = "PhotoBooth Share"
 APP_ID = "PhotoBoothMailer"  # internal id (kept so existing installs keep their data)
-APP_VERSION = "1.0.0"  # bump for every release (see CHANGELOG.md and dev/release.py)
+APP_VERSION = "1.0.1"  # bump for every release (see CHANGELOG.md and dev/release.py)
 
 # ---------------------------------------------------------------- paths
 def app_dir() -> Path:

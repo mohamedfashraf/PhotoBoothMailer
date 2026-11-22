@@ -76,15 +76,15 @@ def main() -> None:
     if not token:
         fail("no saved GitHub login found. Push once with Git so it's saved, then try again.")
 
-    print(f"  tagging {tag} and pushing…")
+    print(f"  tagging {tag} and pushing...")
     git("tag", "-a", tag, "-m", f"PhotoBooth Share {version}")
     git("push", "origin", "HEAD", tag)
 
-    print("  creating the GitHub Release…")
+    print("  creating the GitHub Release...")
     release = api(token, "POST", f"https://api.github.com/repos/{owner}/{repo}/releases", json.dumps({
         "tag_name": tag, "name": f"PhotoBooth Share {version}", "body": notes}).encode())
 
-    print(f"  uploading {exe.name} ({exe.stat().st_size / 1e6:.0f} MB)…")
+    print(f"  uploading {exe.name} ({exe.stat().st_size / 1e6:.0f} MB)...")
     upload = release["upload_url"].split("{")[0] + "?name=" + quote(exe.name)
     api(token, "POST", upload, exe.read_bytes(), content_type="application/octet-stream")
 

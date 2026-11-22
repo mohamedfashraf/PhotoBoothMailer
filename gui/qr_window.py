@@ -123,6 +123,8 @@ class QRWindow(ctk.CTkToplevel):
         self.empty_title.pack(pady=(18, 4))
         self.empty_event = ctk.CTkLabel(self.empty, text="", font=theme.font(15), text_color=theme.MUTED)
         self.empty_event.pack()
+        self.empty_progress = ctk.CTkProgressBar(self.empty, width=260, height=6, corner_radius=3, mode="indeterminate",
+                                                 progress_color=theme.ACCENT, fg_color=theme.SOFT)
 
         # Staff toolbar: a small floating pill at the bottom. In full screen it hides itself and
         # comes back for a moment when the mouse moves.
@@ -162,6 +164,11 @@ class QRWindow(ctk.CTkToplevel):
         # CTkToplevel resets its icon shortly after opening; set ours afterwards.
         self.after(260, self._set_icon)
         self.after(220, self._reveal)
+
+    def _hide_progress(self) -> None:
+        if self.empty_progress.winfo_manager():
+            self.empty_progress.stop()
+            self.empty_progress.pack_forget()
 
     def _set_icon(self) -> None:
         ico = resource_path("assets/app.ico")
@@ -364,16 +371,21 @@ class QRWindow(ctk.CTkToplevel):
             self.content.place_forget()
             self.empty_title.configure(text="Getting the online link ready…")
             self.empty_event.configure(text="This takes a few seconds. Check the laptop's internet if it takes longer.")
+            if not self.empty_progress.winfo_manager():
+                self.empty_progress.pack(pady=(18, 0))
+                self.empty_progress.start()
             self.empty.place(relx=0.5, rely=0.5, y=self._centre_offset(), anchor="center")
             self._last_render_key = None
             return
         if session is None and not shared:
             self.content.place_forget()
+            self._hide_progress()
             self.empty_title.configure(text="Waiting for the first guest…")
             self.empty_event.configure(text=event)
             self.empty.place(relx=0.5, rely=0.5, y=self._centre_offset(), anchor="center")
             return
         self.empty.place_forget()
+        self._hide_progress()
         self.content.place(relx=0.5, rely=0.5, y=self._centre_offset(), anchor="center")
 
         # Size the QR to the window (in customtkinter units), leaving room for the text.
