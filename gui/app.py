@@ -5,7 +5,7 @@ import queue
 
 import customtkinter as ctk
 
-from config import APP_NAME, Settings, resource_path
+from config import APP_NAME, APP_VERSION, Settings, resource_path
 import netutil
 from db import Database
 from server import GuestServer
@@ -291,7 +291,7 @@ class App(ctk.CTk):
         icon_tile(brand, "camera", size=36, fg=theme.ACCENT, color=icons.WHITE).grid(row=0, column=0, rowspan=2)
         ctk.CTkLabel(brand, text="PhotoBooth", font=theme.font(15, "bold"), text_color=theme.TEXT,
                      anchor="w", height=18).grid(row=0, column=1, sticky="sw", padx=(12, 0))
-        ctk.CTkLabel(brand, text="Photo sharing", font=theme.font(12), text_color=theme.MUTED,
+        ctk.CTkLabel(brand, text=f"Photo sharing · v{APP_VERSION}", font=theme.font(12), text_color=theme.MUTED,
                      anchor="w", height=16).grid(row=1, column=1, sticky="nw", padx=(12, 0))
 
         for i, (key, label, icon_name) in enumerate(NAV, start=1):

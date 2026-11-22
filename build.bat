@@ -39,9 +39,13 @@ if defined CONDA_PREFIX if exist "%CONDA_PREFIX%\Library\bin\tk86t.dll" set "PAT
     %EXTRA% ^
     main.py || goto :error
 
-echo === 4/4  Done
+echo === 4/4  Saving a copy of this version
+for /f "delims=" %%V in ('%PY% -c "import config; print(config.APP_VERSION)"') do set VERSION=%%V
+if not exist "releases" mkdir releases
+copy /y "dist\PhotoBoothShare.exe" "releases\PhotoBoothShare-%VERSION%.exe" >nul || goto :error
 echo.
-echo     dist\PhotoBoothShare.exe is ready. Copy it to the event laptop and double-click it.
+echo     dist\PhotoBoothShare.exe is ready (version %VERSION%). Copy it to the event laptop and double-click it.
+echo     A copy is kept as releases\PhotoBoothShare-%VERSION%.exe
 echo     Its settings and database are saved next to it.
 echo.
 exit /b 0

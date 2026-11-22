@@ -169,6 +169,22 @@ without a download at the event) and creates **`dist\PhotoBoothShare.exe`**: one
 window. Copy it to the event laptop, for example into `D:\PhotoBooth\`, and double-click it. Its
 settings and database are created next to it. Opening it a second time just says it's already open.
 
+## Versions and releases
+
+The version number is `APP_VERSION` in `config.py`; the app shows it in the sidebar. Every version is
+listed in [CHANGELOG.md](CHANGELOG.md) and published as a GitHub Release with its `.exe` attached,
+so any older version can be downloaded again. `build.bat` also keeps a copy of each build in
+`releases\` (e.g. `releases\PhotoBoothShare-1.0.0.exe`).
+
+To publish a new version:
+
+1. Change `APP_VERSION` in `config.py` (bug fix: `1.0.1`; new feature: `1.1.0`).
+2. Add a `## 1.1.0 (date)` section at the top of `CHANGELOG.md` saying what changed.
+3. Run `.\build.bat`.
+4. Commit: `git commit -am "Version 1.1.0"`.
+5. Run `python dev/release.py`. It tags the version, pushes it and creates the GitHub Release with
+   the `.exe`.
+
 ## Event-day checklist
 
 **The day before**
