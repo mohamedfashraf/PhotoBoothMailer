@@ -34,6 +34,7 @@ test_photos/
 *.png
 # ...but keep the app's own icon
 !assets/**/*.png
+!static/icon.png
 
 # --- Editors and Windows
 .vscode/

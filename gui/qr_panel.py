@@ -23,8 +23,8 @@ from db import Database
 from gui import theme
 from gui.icons import icon
 from gui.qr_window import make_poster
-from gui.widgets import (Card, Field, StatusLine, WrapLabel, link_button, primary_button, secondary_button,
-                         title_label)
+from gui.widgets import (Card, Field, Segmented, StatusLine, WrapLabel, icon_button, link_button, primary_button,
+                         secondary_button, title_label)
 
 AUTO = "Automatic"
 MODES = {"shared": "One QR for everyone", "guest": "A QR per guest"}
@@ -53,21 +53,18 @@ WARNING_SOFT = ("#FEF3C7", "#3A2A0C")
 ERROR_SOFT = ("#FDE8E8", "#3B1616")
 BANNER = {
     "ok": ("circle-check", theme.SUCCESS, theme.SUCCESS_SOFT),
-    "busy": ("hourglass", theme.ACCENT_TEXT, theme.ACCENT_SOFT),
+    "busy": ("hourglass", theme.MUTED, theme.SOFT),
     "warning": ("triangle-alert", theme.WARNING, WARNING_SOFT),
     "error": ("triangle-alert", theme.ERROR, ERROR_SOFT),
 }
 
 
-def _segmented(master, values, command) -> ctk.CTkSegmentedButton:
-    return ctk.CTkSegmentedButton(
-        master, values=values, command=command, height=32, font=theme.font(13, "bold"),
-        selected_color=theme.ACCENT, selected_hover_color=theme.ACCENT_HOVER, fg_color=theme.SOFT,
-        unselected_color=theme.SOFT, unselected_hover_color=theme.SOFT_HOVER, text_color=theme.TEXT)
+def _segmented(master, values, command) -> Segmented:
+    return Segmented(master, values=values, command=command)
 
 
 def _section_label(master, text: str) -> ctk.CTkLabel:
-    return ctk.CTkLabel(master, text=text, font=theme.font(13, "bold"), text_color=theme.TEXT, anchor="w")
+    return ctk.CTkLabel(master, text=text, font=theme.font(12, "bold"), text_color=theme.TEXT, anchor="w")
 
 
 def _divider(master) -> ctk.CTkFrame:
@@ -106,34 +103,32 @@ class QRPanel(ctk.CTkFrame):
         body.grid_columnconfigure(0, weight=1)
 
         # ---- status banner
-        banner = ctk.CTkFrame(body, fg_color=theme.CARD, corner_radius=16, border_width=1, border_color=theme.BORDER)
+        banner = ctk.CTkFrame(body, fg_color=theme.CARD, corner_radius=12, border_width=1, border_color=theme.BORDER)
         banner.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 12))
         banner.grid_columnconfigure(1, weight=1)
-        self.banner_icon = ctk.CTkLabel(banner, text="", width=38, height=38, corner_radius=11)
+        self.banner_icon = ctk.CTkLabel(banner, text="", width=34, height=34, corner_radius=9)
         self.banner_icon.grid(row=0, column=0, rowspan=2, padx=(16, 12), pady=12)
-        self.banner_title = ctk.CTkLabel(banner, text="", font=theme.font(15, "bold"), text_color=theme.TEXT,
+        self.banner_title = ctk.CTkLabel(banner, text="", font=theme.font(14, "bold"), text_color=theme.TEXT,
                                          anchor="w", height=20)
         self.banner_title.grid(row=0, column=1, sticky="sew", pady=(12, 0))
-        self.banner_text = WrapLabel(banner, "", size=13)
+        self.banner_text = WrapLabel(banner, "", size=12)
         self.banner_text.grid(row=1, column=1, sticky="new", pady=(1, 12))
-        self.progress = ctk.CTkProgressBar(banner, height=4, corner_radius=2, progress_color=theme.ACCENT,
+        self.progress = ctk.CTkProgressBar(banner, height=3, corner_radius=2, progress_color=theme.ACCENT,
                                            fg_color=theme.SOFT, mode="indeterminate")
         self.progress.grid(row=2, column=0, columnspan=3, sticky="ew", padx=16, pady=(0, 12))
         self.progress.grid_remove()
         actions = ctk.CTkFrame(banner, fg_color="transparent")
         actions.grid(row=0, column=2, rowspan=2, padx=(12, 16))
-        secondary_button(actions, "Test", self._open_test_page, icon_name="external-link", height=36,
-                         width=96).pack(side="left")
-        ctk.CTkButton(actions, text="", image=icon("rotate-ccw", 16, theme.MUTED), width=36, height=36,
-                      corner_radius=10, fg_color=theme.SOFT, hover_color=theme.SOFT_HOVER,
-                      command=self.refresh).pack(side="left", padx=(6, 0))
+        secondary_button(actions, "Test", self._open_test_page, icon_name="external-link",
+                         width=84).pack(side="left")
+        icon_button(actions, "rotate-ccw", self.refresh).pack(side="left", padx=(6, 0))
 
         # ---- what guests scan
         scan = Card(body, "What guests scan", icon_name="scan-qr-code")
         scan.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
         self.mode = _segmented(scan.body, list(MODES.values()), self._on_mode)
         self.mode.grid(row=0, column=0, sticky="w")
-        self.mode_text = WrapLabel(scan.body, "", size=13)
+        self.mode_text = WrapLabel(scan.body, "", size=12)
         self.mode_text.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
         self.shared_box = ctk.CTkFrame(scan.body, fg_color="transparent")
@@ -144,12 +139,11 @@ class QRPanel(ctk.CTkFrame):
         search_row.grid(row=1, column=0, sticky="w")
         _section_label(search_row, "Name search").pack(side="left")
         self.search_choice = _segmented(search_row, ["On", "Off"], self._on_search)
-        self.search_choice.configure(height=30, width=110)
         self.search_choice.pack(side="left", padx=(12, 0))
         self.search_text = WrapLabel(self.shared_box, "", size=12)
         self.search_text.grid(row=2, column=0, sticky="ew", pady=(6, 0))
         self.poster_button = secondary_button(self.shared_box, "Save poster", self._save_poster,
-                                              icon_name="save", width=150, height=36)
+                                              icon_name="save", width=130)
         self.poster_button.grid(row=1, column=1, rowspan=2, sticky="e", padx=(16, 0))
         self.scan_status = StatusLine(scan.body)
         self.scan_status.grid(row=3, column=0, sticky="ew", pady=(10, 0))
@@ -160,7 +154,7 @@ class QRPanel(ctk.CTkFrame):
         net.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 16))
         self.connection = _segmented(net.body, list(CONNECTIONS.values()), self._on_connection)
         self.connection.grid(row=0, column=0, sticky="w")
-        self.connection_text = WrapLabel(net.body, "", size=13)
+        self.connection_text = WrapLabel(net.body, "", size=12)
         self.connection_text.grid(row=1, column=0, sticky="ew", pady=(8, 0))
 
         # online: optional permanent address
@@ -171,10 +165,10 @@ class QRPanel(ctk.CTkFrame):
         _section_label(self.perm_box, "Permanent address").grid(row=1, column=0, sticky="w")
         self.perm_summary = WrapLabel(self.perm_box, "", size=12)
         self.perm_summary.grid(row=2, column=0, sticky="ew", pady=(2, 0))
-        self.perm_toggle = secondary_button(self.perm_box, "Set up", self._toggle_permanent, height=36, width=110)
+        self.perm_toggle = secondary_button(self.perm_box, "Set up", self._toggle_permanent, width=96)
         self.perm_toggle.grid(row=1, column=1, rowspan=2, sticky="e", padx=(16, 0))
 
-        self.perm_form = ctk.CTkFrame(self.perm_box, fg_color=theme.FIELD, corner_radius=12)
+        self.perm_form = ctk.CTkFrame(self.perm_box, fg_color=theme.SOFT, corner_radius=10)
         self.perm_form.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(12, 0))
         self.perm_form.grid_columnconfigure((0, 1), weight=1, uniform="perm")
         self.perm_steps = WrapLabel(self.perm_form, "", size=12)
@@ -187,9 +181,9 @@ class QRPanel(ctk.CTkFrame):
         self.perm_token.grid(row=2, column=1, sticky="new", padx=(8, 16))
         buttons = ctk.CTkFrame(self.perm_form, fg_color="transparent")
         buttons.grid(row=3, column=0, columnspan=2, sticky="w", padx=16, pady=(12, 16))
-        primary_button(buttons, "Save", self._save_permanent, icon_name="save", width=110, height=36).pack(side="left")
+        primary_button(buttons, "Save", self._save_permanent, icon_name="save", width=96).pack(side="left")
         self.perm_remove = secondary_button(buttons, "Use the free link instead", self._remove_permanent,
-                                            width=210, height=36)
+                                            width=200)
         self.perm_remove.pack(side="left", padx=(10, 0))
         self.perm_status = StatusLine(self.perm_form)
         self.perm_status.grid(row=4, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 14))
@@ -264,7 +258,7 @@ class QRPanel(ctk.CTkFrame):
 
     def _banner(self, kind: str, title: str, text: str, progress=None) -> None:
         icon_name, color, tile = BANNER[kind]
-        self.banner_icon.configure(image=icon(icon_name, 22, color), fg_color=tile)
+        self.banner_icon.configure(image=icon(icon_name, 18, color), fg_color=tile)
         self.banner_title.configure(text=title)
         self.banner_text.configure(text=text)
         if progress is None:

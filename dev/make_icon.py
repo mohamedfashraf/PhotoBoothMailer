@@ -1,4 +1,6 @@
-"""Generate assets/app.ico (window/taskbar/exe icon): white Lucide camera on an indigo rounded square.
+"""Generate the app icon: a white Lucide camera on a black rounded square.
+
+Writes assets/app.ico (window/taskbar/exe), assets/app.png and static/icon.png (guest page icon).
 
     python dev/make_icon.py
 """
@@ -16,8 +18,8 @@ CAMERA = chr(0xE064)
 
 def render(size: int = 1024) -> Image.Image:
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    # Indigo vertical gradient inside a rounded square.
-    top, bottom = (124, 124, 255), (79, 70, 229)
+    # Near-black vertical gradient (zinc 700 -> zinc 950) inside a rounded square.
+    top, bottom = (63, 63, 70), (9, 9, 11)
     gradient = Image.new("RGBA", (size, size))
     draw = ImageDraw.Draw(gradient)
     for y in range(size):
@@ -39,4 +41,5 @@ if __name__ == "__main__":
     image = render()
     image.save(OUT, sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
     image.resize((256, 256), Image.LANCZOS).save(OUT.with_suffix(".png"))
+    image.resize((180, 180), Image.LANCZOS).save(ROOT / "static" / "icon.png")  # phones: tab + home screen
     print(f"Wrote {OUT}")

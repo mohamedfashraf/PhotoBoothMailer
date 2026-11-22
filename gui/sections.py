@@ -9,7 +9,7 @@ import customtkinter as ctk
 import naming
 from gui import theme
 from gui.icons import icon
-from gui.widgets import Field, StatusLine, WrapLabel, icon_tile, primary_button, shorten_path
+from gui.widgets import Field, StatusLine, WrapLabel, icon_tile, primary_button, secondary_button, shorten_path
 
 
 
@@ -21,8 +21,8 @@ class FolderPicker(ctk.CTkFrame):
         self.path = ""
         self.grid_columnconfigure(0, weight=1)
 
-        self.pill = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=10, border_width=1,
-                                 border_color=theme.BORDER, height=36)
+        self.pill = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=8, border_width=1,
+                                 border_color=theme.BORDER, height=34)
         self.pill.grid(row=0, column=0, sticky="ew")
         self.pill.grid_propagate(False)
         self.pill.grid_columnconfigure(1, weight=1)
@@ -32,7 +32,7 @@ class FolderPicker(ctk.CTkFrame):
         self.path_label = ctk.CTkLabel(self.pill, text="", font=theme.font(14), anchor="w")
         self.path_label.grid(row=0, column=1, sticky="ew", padx=(0, 12))
 
-        primary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=150, height=36).grid(
+        secondary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=150, height=34).grid(
             row=0, column=1, padx=(10, 0))
 
         self.status = StatusLine(self)
@@ -95,11 +95,11 @@ class EventFields(ctk.CTkFrame):
         ctk.CTkLabel(self, text="PREVIEW: THE TOP OF YOUR GUEST'S PHOTOS PAGE", font=theme.font(11, "bold"),
                      text_color=theme.MUTED, anchor="w", height=16).grid(row=1, column=0, sticky="ew",
                                                                           pady=(14, 6))
-        preview = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=12, border_width=1,
+        preview = ctk.CTkFrame(self, fg_color=theme.SOFT, corner_radius=10, border_width=0,
                                border_color=theme.BORDER)
         preview.grid(row=2, column=0, sticky="ew")
         preview.grid_columnconfigure(1, weight=1)
-        icon_tile(preview, "camera", size=40, fg=theme.ACCENT, color=("#FFFFFF", "#FFFFFF")).grid(row=0, column=0, rowspan=2, padx=(14, 12), pady=12)
+        icon_tile(preview, "camera", size=36, fg=theme.PRIMARY, color=theme.PRIMARY_TEXT).grid(row=0, column=0, rowspan=2, padx=(14, 12), pady=12)
         self.preview_label = ctk.CTkLabel(preview, text="", font=theme.font(14, "bold"), text_color=theme.TEXT,
                                           anchor="w", height=20)
         self.preview_label.grid(row=0, column=1, sticky="sew", padx=(0, 14), pady=(12, 0))

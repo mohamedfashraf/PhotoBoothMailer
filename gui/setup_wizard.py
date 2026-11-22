@@ -37,13 +37,13 @@ class SetupWizard(ctk.CTkFrame):
         top = ctk.CTkFrame(column, fg_color="transparent")
         top.grid(row=0, column=0, sticky="ew", pady=(18, 12))
         top.grid_columnconfigure(2, weight=1)
-        icon_tile(top, "camera", size=30, fg=theme.ACCENT, color=("#FFFFFF", "#FFFFFF")).grid(
+        icon_tile(top, "camera", size=28, icon_size=15, fg=theme.PRIMARY, color=theme.PRIMARY_TEXT, radius=8).grid(
             row=0, column=0, padx=(0, 10))
-        ctk.CTkLabel(top, text=config.APP_NAME, font=theme.font(15, "bold"),
+        ctk.CTkLabel(top, text=config.APP_NAME, font=theme.font(13, "bold"),
                      text_color=theme.TEXT).grid(row=0, column=1, sticky="w")
         self.step_label = ctk.CTkLabel(top, text="", font=theme.font(13), text_color=theme.MUTED)
         self.step_label.grid(row=0, column=2, sticky="e")
-        self.progress = ctk.CTkProgressBar(top, height=6, corner_radius=3, progress_color=theme.ACCENT,
+        self.progress = ctk.CTkProgressBar(top, height=4, corner_radius=2, progress_color=theme.ACCENT,
                                            fg_color=theme.SOFT)
         self.progress.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(14, 0))
 

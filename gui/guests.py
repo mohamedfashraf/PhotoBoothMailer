@@ -46,23 +46,21 @@ class GuestsView(ctk.CTkFrame):
         header.grid(row=0, column=0, sticky="ew", padx=24, pady=(18, 10))
         header.grid_columnconfigure(0, weight=1)
         title_label(header, "Guests").grid(row=0, column=0, sticky="w")
-        WrapLabel(header, "Double-click a guest to show their QR code.",
-                  size=13).grid(row=1, column=0, sticky="ew", pady=(2, 0))
-        chips = ctk.CTkFrame(header, fg_color="transparent")
-        chips.grid(row=0, column=1, rowspan=2, sticky="e")
-        self.guest_chip = self._chip(chips, "users")
-        self.photo_chip = self._chip(chips, "images")
-        self.sent_chip = self._chip(chips, "circle-check", color=theme.SUCCESS)
-
         actions = ctk.CTkFrame(header, fg_color="transparent")
-        actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
-        actions.grid_columnconfigure(2, weight=1)
-        secondary_button(actions, "New event", self.on_new_event, icon_name="party-popper", height=32,
-                         width=128).grid(row=0, column=0)
-        secondary_button(actions, "Export list", self._export, icon_name="save", height=32,
-                         width=128).grid(row=0, column=1, padx=(8, 0))
-        self.export_status = StatusLine(actions)
-        self.export_status.grid(row=0, column=2, sticky="ew", padx=(14, 0))
+        actions.grid(row=0, column=1, sticky="e")
+        secondary_button(actions, "Export list", self._export, icon_name="save", width=116).pack(side="left")
+        secondary_button(actions, "New event", self.on_new_event, icon_name="party-popper", width=116).pack(
+            side="left", padx=(8, 0))
+
+        # One quiet line of numbers instead of big boxes
+        stats = ctk.CTkFrame(header, fg_color="transparent")
+        stats.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 0))
+        self.guest_chip = self._chip(stats, "users")
+        self.photo_chip = self._chip(stats, "images")
+        self.sent_chip = self._chip(stats, "circle-check", color=theme.SUCCESS)
+        self.export_status = StatusLine(stats, wraplength=900, autowrap=False)
+        self.export_status.pack(side="right")
+        self.export_status.show("info", "Double-click a guest to show their QR code")
 
         # Body: the table and an empty state, stacked; we raise whichever applies.
         body = Card(self)
@@ -109,9 +107,8 @@ class GuestsView(ctk.CTkFrame):
 
     def _chip(self, master, icon_name: str, color=theme.MUTED) -> ctk.CTkLabel:
         chip = ctk.CTkLabel(master, text="", image=icon(icon_name, 14, color), compound="left",
-                            font=theme.font(12, "bold"), text_color=theme.TEXT, fg_color=theme.CARD,
-                            corner_radius=9, height=30, padx=10)
-        chip.pack(side="left", padx=(6, 0))
+                            font=theme.font(12), text_color=theme.MUTED, fg_color="transparent", height=20)
+        chip.pack(side="left", padx=(0, 16))
         return chip
 
     def _on_double_click(self, _event=None) -> None:
@@ -131,16 +128,17 @@ class GuestsView(ctk.CTkFrame):
         bg, fg = theme.CARD[i], theme.TEXT[i]
         style.layout("Guests.Treeview", [("Guests.Treeview.treearea", {"sticky": "nswe"})])
         style.configure("Guests.Treeview", background=bg, fieldbackground=bg, foreground=fg, borderwidth=0,
-                        rowheight=int(36 * scale), font=(theme.FAMILY, 11))
-        style.map("Guests.Treeview", background=[("selected", theme.ACCENT_SOFT[i])],
-                  foreground=[("selected", theme.ACCENT_TEXT[i])])
-        style.configure("Guests.Treeview.Heading", background=bg, foreground=theme.MUTED[i], borderwidth=0,
-                        relief="flat", font=(theme.FAMILY, 9, "bold"), padding=(int(4 * scale), int(8 * scale)))
+                        rowheight=int(34 * scale), font=(theme.FAMILY, 10))
+        style.map("Guests.Treeview", background=[("selected", theme.SOFT[i])],
+                  foreground=[("selected", theme.TEXT[i])])
+        style.configure("Guests.Treeview.Heading", background=bg, foreground=theme.FAINT[i], borderwidth=0,
+                        relief="flat", font=(theme.SEMIBOLD, 9), padding=(int(4 * scale), int(8 * scale)))
         style.map("Guests.Treeview.Heading", background=[("active", bg)], relief=[("active", "flat")])
-        self.tree.tag_configure("ready", foreground=fg)  # calm: only rows that need attention get colour
-        self.tree.tag_configure("sending", foreground=theme.ACCENT_TEXT[i])
+        # Calm table: only rows that mean something get colour.
+        self.tree.tag_configure("ready", foreground=fg)
+        self.tree.tag_configure("sending", foreground=fg)  # opened, not saved yet: the status text says it
         self.tree.tag_configure("sent", foreground=theme.SUCCESS[i])
-        self.tree.tag_configure("collecting", foreground=theme.WARNING[i])
+        self.tree.tag_configure("collecting", foreground=theme.FAINT[i])
         self.tree.tag_configure("alert", foreground=theme.ERROR[i])
 
     # ------------------------------------------------------------ data
@@ -196,9 +194,9 @@ class GuestsView(ctk.CTkFrame):
         visible = [s for s in self.rows.values() if s["photo_count"] > 0]
         sent = sum(1 for s in visible if s.get("downloaded_at"))
         photos = sum(s["photo_count"] for s in visible)
-        self.guest_chip.configure(text=f"  {len(visible)} guest{'s' if len(visible) != 1 else ''}")
-        self.photo_chip.configure(text=f"  {photos} photo{'s' if photos != 1 else ''}")
-        self.sent_chip.configure(text=f"  {sent} saved")
+        self.guest_chip.configure(text=f" {len(visible)} guest{'s' if len(visible) != 1 else ''}")
+        self.photo_chip.configure(text=f" {photos} photo{'s' if photos != 1 else ''}")
+        self.sent_chip.configure(text=f" {sent} saved")
         if visible:
             show_page(self.table_page)
         else:

@@ -1,49 +1,67 @@
-"""Colors and fonts. Every color is a (light, dark) pair so the app follows Windows light/dark mode."""
+"""Colors and fonts. Every color is a (light, dark) pair so the app follows Windows light/dark mode.
+
+The look: black and white (zinc greys), dark primary buttons, hairline borders and semibold (not bold)
+type. Colour only where it carries meaning: green = saved, red = problem, amber = warning.
+"""
 from __future__ import annotations
 
 import tkinter.font as tkfont
 
 import customtkinter as ctk
 
-FAMILY = "Segoe UI"
+FAMILY = "Segoe UI"            # body text
+SEMIBOLD = "Segoe UI Semibold"  # labels, buttons, headings (refined; plain "bold" looks heavy)
+DISPLAY = "Segoe UI Semibold"   # big titles
 
-ACCENT = ("#5B5BF7", "#7B7BFF")
-ACCENT_HOVER = ("#4646E6", "#6767F0")
-ACCENT_SOFT = ("#EEEEFF", "#24244A")
-ACCENT_TEXT = ("#3F3FD6", "#A9A9FF")
+# Black and white: the "accent" (selection, progress, highlights) is the same near-black / near-white
+# as the text. Colour is kept only where it means something (green = saved, red = problem).
+ACCENT = ("#18181B", "#FAFAFA")
+ACCENT_HOVER = ("#3F3F46", "#E4E4E7")
+ACCENT_SOFT = ("#F4F4F5", "#202024")
+ACCENT_TEXT = ("#18181B", "#FAFAFA")
 
-BG = ("#F5F6FA", "#0F1014")
-SIDEBAR = ("#FFFFFF", "#16171C")
-CARD = ("#FFFFFF", "#1A1B21")
-BORDER = ("#E4E6EE", "#2A2C35")
-FIELD = ("#F7F8FB", "#21222A")
-SOFT = ("#EEF0F5", "#24252E")
-SOFT_HOVER = ("#E1E4ED", "#2F313B")
+# Primary buttons: near-black in light mode, near-white in dark mode.
+PRIMARY = ("#18181B", "#FAFAFA")
+PRIMARY_HOVER = ("#3F3F46", "#E4E4E7")
+PRIMARY_TEXT = ("#FFFFFF", "#18181B")
 
-TEXT = ("#15161C", "#F1F2F6")
-MUTED = ("#686C7E", "#9A9DAE")
+BG = ("#FAFAFA", "#0C0C0E")
+SIDEBAR = ("#F4F4F5", "#121215")
+CARD = ("#FFFFFF", "#17171A")
+BORDER = ("#E4E4E7", "#27272A")
+FIELD = ("#FFFFFF", "#1C1C20")
+SOFT = ("#F4F4F5", "#202024")
+SOFT_HOVER = ("#E9E9EC", "#2A2A2F")
 
-SUCCESS = ("#15803D", "#4ADE80")
-SUCCESS_SOFT = ("#E7F7EC", "#15301F")
+TEXT = ("#09090B", "#FAFAFA")
+MUTED = ("#71717A", "#A1A1AA")
+FAINT = ("#A1A1AA", "#71717A")
+
+SUCCESS = ("#16A34A", "#4ADE80")
+SUCCESS_SOFT = ("#F0FDF4", "#0B2A17")
 ERROR = ("#DC2626", "#F87171")
-WARNING = ("#B45309", "#FBBF24")
+WARNING = ("#D97706", "#FBBF24")
 
 
 def pick_font_family(root) -> None:
-    """Prefer Windows 11's Segoe UI Variable when it's installed."""
-    global FAMILY
+    """Prefer Windows 11's Segoe UI Variable (with its real Semibold) when it's installed."""
+    global FAMILY, SEMIBOLD, DISPLAY
     try:
         available = set(tkfont.families(root))
     except Exception:
         return
-    for name in ("Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI"):
-        if name in available:
-            FAMILY = name
-            return
+    if "Segoe UI Variable Text" in available and "Segoe UI Variable Text Semibold" in available:
+        FAMILY, SEMIBOLD = "Segoe UI Variable Text", "Segoe UI Variable Text Semibold"
+        DISPLAY = "Segoe UI Variable Display Semib" if "Segoe UI Variable Display Semib" in available else SEMIBOLD
+    elif "Segoe UI Semibold" in available:
+        FAMILY, SEMIBOLD, DISPLAY = "Segoe UI", "Segoe UI Semibold", "Segoe UI Semibold"
 
 
-def font(size: int = 14, weight: str = "normal") -> ctk.CTkFont:
-    return ctk.CTkFont(family=FAMILY, size=size, weight=weight)
+def font(size: int = 13, weight: str = "normal") -> ctk.CTkFont:
+    """weight "bold" uses the semibold face; sizes from 18 up use the display face."""
+    if weight == "bold":
+        return ctk.CTkFont(family=DISPLAY if size >= 18 else SEMIBOLD, size=size)
+    return ctk.CTkFont(family=FAMILY, size=size)
 
 
 def apply_appearance(mode: str) -> None:

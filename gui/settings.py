@@ -14,7 +14,7 @@ import config
 from config import Settings
 from gui import theme
 from gui.sections import EventFields, FolderPicker
-from gui.widgets import Card, Field, StatusLine, WrapLabel, primary_button, secondary_button, title_label
+from gui.widgets import Card, Field, Segmented, StatusLine, WrapLabel, primary_button, secondary_button, title_label
 
 APPEARANCE = {"System": "system", "Light": "light", "Dark": "dark"}
 
@@ -67,15 +67,11 @@ class SettingsView(ctk.CTkFrame):
         look = ctk.CTkFrame(adv_card.body, fg_color="transparent")  # lines up with the port box
         look.grid(row=0, column=1, sticky="new", padx=(12, 0))
         ctk.CTkLabel(look, text="Look", font=theme.font(13, "bold"), text_color=theme.TEXT, height=20).pack(anchor="w")
-        self.appearance = ctk.CTkSegmentedButton(
-            look, values=list(APPEARANCE), command=self._on_appearance, height=36, font=theme.font(13, "bold"),
-            text_color=theme.TEXT,
-            selected_color=theme.ACCENT, selected_hover_color=theme.ACCENT_HOVER,
-            unselected_color=theme.SOFT, unselected_hover_color=theme.SOFT_HOVER, fg_color=theme.SOFT)
+        self.appearance = Segmented(look, values=list(APPEARANCE), command=self._on_appearance)
         self.appearance.pack(anchor="w", pady=(6, 0))
 
         # Footer
-        footer = ctk.CTkFrame(self, fg_color=theme.SIDEBAR, corner_radius=0, height=56, border_width=0)
+        footer = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0, height=52, border_width=0)
         footer.grid(row=2, column=0, sticky="ew")
         footer.grid_columnconfigure(0, weight=1)
         self.status = StatusLine(footer)
@@ -94,10 +90,10 @@ class SettingsView(ctk.CTkFrame):
         self._color = ""
         self.swatches: dict[str, ctk.CTkButton] = {}
         for name, color in branding.PRESETS.items():
-            button = ctk.CTkButton(swatches, text="", width=30, height=30, corner_radius=15, fg_color=color,
-                                   hover_color=color, border_width=3, border_color=theme.CARD,
+            button = ctk.CTkButton(swatches, text="", width=26, height=26, corner_radius=13, fg_color=color,
+                                   hover_color=color, border_width=2, border_color=theme.CARD,
                                    command=lambda c=color: self._pick_color(c))
-            button.pack(side="left", padx=(0, 8))
+            button.pack(side="left", padx=(0, 6))
             self.swatches[color] = button
         self.color_name = ctk.CTkLabel(swatches, text="", font=theme.font(13), text_color=theme.MUTED)
         self.color_name.pack(side="left", padx=(6, 0))
@@ -106,8 +102,8 @@ class SettingsView(ctk.CTkFrame):
                      anchor="w").grid(row=2, column=0, sticky="w", pady=(16, 0))
         logo_row = ctk.CTkFrame(body, fg_color="transparent")
         logo_row.grid(row=3, column=0, sticky="w", pady=(6, 0))
-        self.logo_preview = ctk.CTkLabel(logo_row, text="No logo", width=56, height=56, corner_radius=12,
-                                         fg_color=theme.FIELD, text_color=theme.MUTED, font=theme.font(11))
+        self.logo_preview = ctk.CTkLabel(logo_row, text="No logo", width=52, height=52, corner_radius=10,
+                                         fg_color=theme.SOFT, text_color=theme.MUTED, font=theme.font(11))
         self.logo_preview.pack(side="left")
         secondary_button(logo_row, "Choose image", self._choose_logo, icon_name="image", width=150).pack(
             side="left", padx=(12, 0))

@@ -332,33 +332,35 @@ class App(ctk.CTk):
         sidebar.grid_rowconfigure(len(NAV) + 1, weight=1)
 
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
-        brand.grid(row=0, column=0, sticky="ew", padx=16, pady=(18, 18))
-        icon_tile(brand, "camera", size=32, fg=theme.ACCENT, color=icons.WHITE).grid(row=0, column=0, rowspan=2)
-        ctk.CTkLabel(brand, text="PhotoBooth", font=theme.font(15, "bold"), text_color=theme.TEXT,
-                     anchor="w", height=18).grid(row=0, column=1, sticky="sw", padx=(12, 0))
-        ctk.CTkLabel(brand, text=f"Photo sharing · v{APP_VERSION}", font=theme.font(12), text_color=theme.MUTED,
-                     anchor="w", height=16).grid(row=1, column=1, sticky="nw", padx=(12, 0))
+        brand.grid(row=0, column=0, sticky="ew", padx=14, pady=(16, 16))
+        icon_tile(brand, "camera", size=28, icon_size=15, fg=theme.PRIMARY, color=theme.PRIMARY_TEXT,
+                  radius=8).grid(row=0, column=0, rowspan=2)
+        ctk.CTkLabel(brand, text="PhotoBooth Share", font=theme.font(13, "bold"), text_color=theme.TEXT,
+                     anchor="w", height=16).grid(row=0, column=1, sticky="sw", padx=(10, 0))
+        ctk.CTkLabel(brand, text=f"Version {APP_VERSION}", font=theme.font(11), text_color=theme.FAINT,
+                     anchor="w", height=14).grid(row=1, column=1, sticky="nw", padx=(10, 0))
 
         for i, (key, label, icon_name) in enumerate(NAV, start=1):
-            button = ctk.CTkButton(sidebar, text=f"  {label}", anchor="w", height=38, corner_radius=9,
-                                   font=theme.font(13, "bold"), fg_color="transparent",
-                                   hover_color=theme.SOFT, text_color=theme.TEXT, compound="left",
-                                   image=icon(icon_name, 18, theme.MUTED),
+            button = ctk.CTkButton(sidebar, text=f" {label}", anchor="w", height=32, corner_radius=7,
+                                   font=theme.font(13), fg_color="transparent", border_width=1,
+                                   border_color=theme.SIDEBAR, hover_color=theme.SOFT_HOVER,
+                                   text_color=theme.MUTED, compound="left", image=icon(icon_name, 16, theme.MUTED),
                                    command=lambda k=key: self.select(k))
             button.grid(row=i, column=0, sticky="ew", padx=10, pady=1)
             self.nav_buttons[key] = button
 
-        event_box = ctk.CTkFrame(sidebar, fg_color=theme.FIELD, corner_radius=14)
+        event_box = ctk.CTkFrame(sidebar, fg_color=theme.CARD, corner_radius=10, border_width=1,
+                                 border_color=theme.BORDER)
         event_box.grid(row=len(NAV) + 2, column=0, sticky="ew", padx=10, pady=10)
         event_box.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(event_box, text="CURRENT EVENT", font=theme.font(10, "bold"),
-                     text_color=theme.MUTED, anchor="w", height=14).grid(row=0, column=0, sticky="ew",
-                                                                          padx=14, pady=(12, 2))
-        self.event_label = WrapLabel(event_box, "", size=14, weight="bold", color=theme.TEXT, wraplength=160)
-        self.event_label.grid(row=1, column=0, sticky="ew", padx=14)
-        self.folder_label = ctk.CTkLabel(event_box, text="", font=theme.font(12), anchor="w", compound="left",
-                                         height=18)
-        self.folder_label.grid(row=2, column=0, sticky="ew", padx=14, pady=(6, 12))
+                     text_color=theme.FAINT, anchor="w", height=14).grid(row=0, column=0, sticky="ew",
+                                                                          padx=12, pady=(10, 1))
+        self.event_label = WrapLabel(event_box, "", size=13, weight="bold", color=theme.TEXT, wraplength=160)
+        self.event_label.grid(row=1, column=0, sticky="ew", padx=12)
+        self.folder_label = ctk.CTkLabel(event_box, text="", font=theme.font(11), anchor="w", compound="left",
+                                         height=16)
+        self.folder_label.grid(row=2, column=0, sticky="ew", padx=12, pady=(4, 10))
 
         self.content = ctk.CTkFrame(parent, fg_color=theme.BG, corner_radius=0)
         self.content.grid(row=0, column=1, sticky="nsew")
@@ -383,19 +385,22 @@ class App(ctk.CTk):
 
     def _show_folder_status(self, ok: bool) -> None:
         if ok:
-            self.folder_label.configure(text="  Watching photos folder", text_color=theme.SUCCESS,
-                                        image=icon("folder-check", 14, theme.SUCCESS))
+            self.folder_label.configure(text=" Watching photos folder", text_color=theme.SUCCESS,
+                                        image=icon("folder-check", 13, theme.SUCCESS))
         else:
-            self.folder_label.configure(text="  Photos folder missing", text_color=theme.ERROR,
-                                        image=icon("circle-alert", 14, theme.ERROR))
+            self.folder_label.configure(text=" Photos folder missing", text_color=theme.ERROR,
+                                        image=icon("circle-alert", 13, theme.ERROR))
 
     def select(self, key: str) -> None:
         for name, button in self.nav_buttons.items():
             active = name == key
             icon_name = next(i for k, _, i in NAV if k == name)
-            button.configure(fg_color=theme.ACCENT_SOFT if active else "transparent",
-                             text_color=theme.ACCENT_TEXT if active else theme.TEXT,
-                             image=icon(icon_name, 18, theme.ACCENT_TEXT if active else theme.MUTED))
+            button.configure(fg_color=theme.CARD if active else "transparent",
+                             border_color=theme.BORDER if active else theme.SIDEBAR,
+                             hover_color=theme.CARD if active else theme.SOFT_HOVER,
+                             text_color=theme.TEXT if active else theme.MUTED,
+                             font=theme.font(13, "bold" if active else "normal"),
+                             image=icon(icon_name, 16, theme.TEXT if active else theme.MUTED))
         show_page(self.views[key])
 
     def _make_view(self, key: str) -> ctk.CTkFrame:

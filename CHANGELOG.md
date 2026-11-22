@@ -3,6 +3,20 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.2.0 (2026-11-22)
+
+New look: black and white, calmer and more compact.
+
+- Black and white everywhere (app, QR screen, guest's phone page). Colour is only used where it
+  means something: green = saved, red = problem, amber = warning. You can still give the guest page
+  your own colour in Settings → Guest page look.
+- Refined type: Windows 11's semibold font instead of heavy bold, smaller consistent sizes.
+- Dark primary buttons, outlined secondary buttons, pill-style choices (like iOS / macOS) instead of
+  blocky blue bars.
+- Light sidebar with quiet navigation; cards with hairline borders and small icons instead of tiles.
+- Guests: one quiet line of numbers instead of big boxes; only meaningful rows are coloured.
+- New black and white app icon; the guest's phone page now shows it as its tab and home-screen icon.
+
 ## 1.1.2 (2026-11-22)
 
 - More compact everywhere: smaller margins, buttons, boxes and table rows, a narrower sidebar and

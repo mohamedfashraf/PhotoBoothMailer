@@ -8,17 +8,17 @@ from PIL import Image, ImageOps
 
 from config import data_dir
 
-# name -> main colour. The first one is the app's own colour (the default).
+# name -> main colour. The first one (black) is the default.
 PRESETS: dict[str, str] = {
-    "Indigo": "#5B5BF7",
+    "Black": "#18181B",
     "Rose": "#E11D48",
     "Gold": "#B7791F",
     "Emerald": "#059669",
     "Ocean": "#0284C7",
+    "Indigo": "#4F46E5",
     "Plum": "#9333EA",
-    "Black": "#27272A",
 }
-DEFAULT_COLOR = PRESETS["Indigo"]
+DEFAULT_COLOR = PRESETS["Black"]
 LOGO_MAX = 512
 
 
@@ -54,9 +54,11 @@ def palette(color: str) -> dict[str, dict[str, str]]:
     dark_accent = _mix(color, "#ffffff", 0.18)  # a little brighter on a dark background
     return {
         "light": {"accent": light_accent, "accent-hover": _lightness(light_accent, 0.85),
-                  "accent-soft": _mix(light_accent, "#ffffff", 0.9), "accent-text": _lightness(light_accent, 0.8)},
+                  "accent-soft": _mix(light_accent, "#ffffff", 0.9), "accent-text": _lightness(light_accent, 0.8),
+                  "on-accent": "#ffffff"},
         "dark": {"accent": dark_accent, "accent-hover": _lightness(dark_accent, 0.88),
-                 "accent-soft": _mix(dark_accent, "#0f1014", 0.78), "accent-text": _mix(dark_accent, "#ffffff", 0.35)},
+                 "accent-soft": _mix(dark_accent, "#0f1014", 0.78), "accent-text": _mix(dark_accent, "#ffffff", 0.35),
+                 "on-accent": "#ffffff"},
     }
 
 

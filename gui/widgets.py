@@ -17,11 +17,12 @@ class WrapLabel(ctk.CTkLabel):
     """A label whose text wraps to whatever width it is given."""
 
     def __init__(self, master, text: str = "", size: int = 13, color=theme.MUTED,
-                 weight: str = "normal", wraplength: int = 520, **kw):
+                 weight: str = "normal", wraplength: int = 520, autowrap: bool = True, **kw):
         super().__init__(master, text=text, font=theme.font(size, weight), text_color=color,
                          anchor="w", justify="left", wraplength=wraplength, **kw)
         self._last_width = 0
-        tkinter.Frame.bind(self, "<Configure>", self._rewrap, add="+")
+        if autowrap:  # off for one-line labels that should keep their natural width
+            tkinter.Frame.bind(self, "<Configure>", self._rewrap, add="+")
 
     def _rewrap(self, event) -> None:
         try:
@@ -36,12 +37,12 @@ class WrapLabel(ctk.CTkLabel):
             self.configure(wraplength=width)
 
 
-def title_label(master, text: str, size: int = 22) -> ctk.CTkLabel:
+def title_label(master, text: str, size: int = 20) -> ctk.CTkLabel:
     return ctk.CTkLabel(master, text=text, font=theme.font(size, "bold"), text_color=theme.TEXT, anchor="w")
 
 
 def icon_tile(master, name: str, size: int = 36, icon_size: int | None = None,
-              fg=theme.ACCENT_SOFT, color=theme.ACCENT_TEXT, radius: int | None = None) -> ctk.CTkLabel:
+              fg=theme.SOFT, color=theme.TEXT, radius: int | None = None) -> ctk.CTkLabel:
     """An icon centred in a rounded, softly coloured square."""
     return ctk.CTkLabel(master, text="", image=icon(name, icon_size or round(size * 0.5), color),
                         width=size, height=size, fg_color=fg,
@@ -60,12 +61,12 @@ class StatusLine(WrapLabel):
     }
 
     def __init__(self, master, **kw):
-        super().__init__(master, text="", size=13, compound="left", **kw)
+        super().__init__(master, text="", size=12, compound="left", **kw)
 
     def show(self, kind: str, text: str) -> None:
         name, color = self._STYLES.get(kind, self._STYLES["info"])
         self.configure(text=f"  {text}" if name else text, text_color=color,
-                       image=icon(name, 16, color) if name else None)
+                       image=icon(name, 14, color) if name else None)
 
     def clear(self) -> None:
         self.configure(text="", image=None)
@@ -73,29 +74,31 @@ class StatusLine(WrapLabel):
 
 # ---------------------------------------------------------------- containers
 class Card(ctk.CTkFrame):
-    """White rounded panel with an optional icon, title and subtitle. Put content in `.body`."""
+    """White panel with a hairline border and an optional small icon, title and subtitle.
+
+    Put content in `.body`.
+    """
 
     def __init__(self, master, title: str | None = None, subtitle: str | None = None,
                  icon_name: str | None = None, **kw):
-        super().__init__(master, fg_color=theme.CARD, corner_radius=16, border_width=1,
+        super().__init__(master, fg_color=theme.CARD, corner_radius=12, border_width=1,
                          border_color=theme.BORDER, **kw)
         self.grid_columnconfigure(0, weight=1)
         has_header = bool(title)
         if title:
             header = ctk.CTkFrame(self, fg_color="transparent")
-            header.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 0))
+            header.grid(row=0, column=0, sticky="ew", padx=18, pady=(14, 0))
             header.grid_columnconfigure(1, weight=1)
-            col = 0
             if icon_name:
-                icon_tile(header, icon_name, size=30).grid(row=0, column=0, rowspan=2, sticky="n",
-                                                            padx=(0, 14))
-                col = 1
-            ctk.CTkLabel(header, text=title, font=theme.font(15, "bold"), text_color=theme.TEXT,
-                         anchor="w", height=20).grid(row=0, column=col, sticky="ew")
+                ctk.CTkLabel(header, text="", image=icon(icon_name, 16, theme.MUTED), width=16).grid(
+                    row=0, column=0, sticky="w", padx=(0, 8))
+            ctk.CTkLabel(header, text=title, font=theme.font(14, "bold"), text_color=theme.TEXT,
+                         anchor="w", height=20).grid(row=0, column=1, sticky="ew")
             if subtitle:
-                WrapLabel(header, subtitle, height=18).grid(row=1, column=col, sticky="ew", pady=(1, 0))
+                WrapLabel(header, subtitle, size=12, height=16).grid(row=1, column=0, columnspan=2, sticky="ew",
+                                                                     pady=(2, 0))
         self.body = ctk.CTkFrame(self, fg_color="transparent")
-        self.body.grid(row=1, column=0, sticky="nsew", padx=20, pady=(12 if has_header else 16, 18))
+        self.body.grid(row=1, column=0, sticky="nsew", padx=18, pady=(10 if has_header else 14, 16))
         self.body.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
@@ -110,22 +113,92 @@ def _with_icon(kw: dict, icon_name: str | None, color, side: str, size: int = 16
 
 def primary_button(master, text: str, command: Callable | None = None, icon_name: str | None = None,
                    icon_side: str = "left", **kw) -> ctk.CTkButton:
-    kw.setdefault("height", 36)
-    _with_icon(kw, icon_name, WHITE, icon_side)
-    return ctk.CTkButton(master, text=text, command=command, fg_color=theme.ACCENT,
-                         hover_color=theme.ACCENT_HOVER, text_color="#FFFFFF",
-                         text_color_disabled=("#E4E4FF", "#C9C9F5"), corner_radius=9,
+    """The one main action on a screen: near-black (near-white in dark mode)."""
+    kw.setdefault("height", 34)
+    _with_icon(kw, icon_name, theme.PRIMARY_TEXT, icon_side, size=15)
+    return ctk.CTkButton(master, text=text, command=command, fg_color=theme.PRIMARY,
+                         hover_color=theme.PRIMARY_HOVER, text_color=theme.PRIMARY_TEXT,
+                         text_color_disabled=theme.FAINT, corner_radius=8,
                          font=theme.font(13, "bold"), **kw)
 
 
 def secondary_button(master, text: str, command: Callable | None = None, icon_name: str | None = None,
                      icon_side: str = "left", **kw) -> ctk.CTkButton:
-    kw.setdefault("height", 36)
-    _with_icon(kw, icon_name, theme.TEXT, icon_side)
-    return ctk.CTkButton(master, text=text, command=command, fg_color=theme.SOFT,
-                         hover_color=theme.SOFT_HOVER, text_color=theme.TEXT,
-                         text_color_disabled=theme.MUTED, corner_radius=9,
+    """Everything else: white with a hairline border."""
+    kw.setdefault("height", 34)
+    _with_icon(kw, icon_name, theme.TEXT, icon_side, size=15)
+    return ctk.CTkButton(master, text=text, command=command, fg_color=theme.CARD, border_width=1,
+                         border_color=theme.BORDER, hover_color=theme.SOFT, text_color=theme.TEXT,
+                         text_color_disabled=theme.FAINT, corner_radius=8,
                          font=theme.font(13, "bold"), **kw)
+
+
+def icon_button(master, icon_name: str, command: Callable | None = None, size: int = 34) -> ctk.CTkButton:
+    """A square button with just an icon (e.g. refresh)."""
+    return ctk.CTkButton(master, text="", image=icon(icon_name, 15, theme.MUTED), width=size, height=size,
+                         fg_color=theme.CARD, border_width=1, border_color=theme.BORDER, hover_color=theme.SOFT,
+                         corner_radius=8, command=command)
+
+
+class Segmented(ctk.CTkFrame):
+    """A pill-style choice (like iOS / macOS): a light grey track, the chosen option a raised white chip.
+
+    Used like CTkSegmentedButton: Segmented(master, values=[...], command=fn); .set(v), .get(),
+    .configure(values=[...]).
+    """
+
+    def __init__(self, master, values: list[str], command: Callable[[str], None] | None = None,
+                 height: int = 30, font_size: int = 12, **kw):
+        super().__init__(master, fg_color=theme.SOFT, corner_radius=9, **kw)
+        self._command = command
+        self._height = height
+        self._font_size = font_size
+        self._value = ""
+        self._buttons: dict[str, ctk.CTkButton] = {}
+        self._build(list(values))
+
+    def _build(self, values: list[str]) -> None:
+        for button in self._buttons.values():
+            button.destroy()
+        self._buttons = {}
+        for i, value in enumerate(values):
+            button = ctk.CTkButton(self, text=value, height=self._height - 6, width=40, corner_radius=7,
+                                   border_width=1, font=theme.font(self._font_size, "bold"),
+                                   command=lambda v=value: self._click(v))
+            button.grid(row=0, column=i, padx=(3 if i == 0 else 0, 3), pady=3)
+            self._buttons[value] = button
+        self._paint()
+
+    def _click(self, value: str) -> None:
+        if value == self._value:
+            return
+        self.set(value)
+        if self._command:
+            self._command(value)
+
+    def _paint(self) -> None:
+        for value, button in self._buttons.items():
+            on = value == self._value
+            button.configure(fg_color=theme.CARD if on else theme.SOFT,
+                             border_color=theme.BORDER if on else theme.SOFT,
+                             hover_color=theme.CARD if on else theme.SOFT_HOVER,
+                             text_color=theme.TEXT if on else theme.MUTED)
+
+    def set(self, value: str) -> None:
+        self._value = value
+        self._paint()
+
+    def get(self) -> str:
+        return self._value
+
+    def configure(self, require_redraw=False, **kwargs):
+        values = kwargs.pop("values", None)
+        if values is not None and list(values) != list(self._buttons):
+            self._build(list(values))
+        kwargs.pop("height", None)
+        kwargs.pop("width", None)
+        if kwargs or require_redraw:
+            super().configure(require_redraw=require_redraw, **kwargs)
 
 
 def link_button(master, text: str, url: str, **kw) -> ctk.CTkButton:
@@ -147,25 +220,23 @@ class Field(ctk.CTkFrame):
         self._hint_text = hint
         self._on_change = on_change
 
-        self.label = ctk.CTkLabel(self, text=label, font=theme.font(13, "bold"), text_color=theme.TEXT,
-                                  anchor="w", height=20)
+        self.label = ctk.CTkLabel(self, text=label, font=theme.font(12, "bold"), text_color=theme.TEXT,
+                                  anchor="w", height=18)
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
-        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=36, corner_radius=9,
+        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=34, corner_radius=8,
                                   border_width=1, border_color=theme.BORDER, fg_color=theme.FIELD,
-                                  text_color=theme.TEXT, placeholder_text_color=theme.MUTED,
-                                  font=theme.font(14), show="•" if secret else "")
-        self.entry.grid(row=1, column=0, sticky="ew", pady=(6, 0))
+                                  text_color=theme.TEXT, placeholder_text_color=theme.FAINT,
+                                  font=theme.font(13), show="•" if secret else "")
+        self.entry.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         self.entry.bind("<KeyRelease>", self._changed)
 
         if secret:
-            self.eye = ctk.CTkButton(self, text="", image=icon("eye", 17, theme.MUTED), width=36, height=36,
-                                     corner_radius=10, fg_color=theme.SOFT, hover_color=theme.SOFT_HOVER,
-                                     command=self._toggle_secret)
-            self.eye.grid(row=1, column=1, padx=(8, 0), pady=(6, 0))
+            self.eye = icon_button(self, "eye", self._toggle_secret)
+            self.eye.grid(row=1, column=1, padx=(6, 0), pady=(5, 0))
 
         self.hint = WrapLabel(self, hint, size=12, wraplength=300)
-        self.hint.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(4, 0))
+        self.hint.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(3, 0))
         if not hint:
             self.hint.grid_remove()
 
@@ -177,7 +248,7 @@ class Field(ctk.CTkFrame):
     def _toggle_secret(self) -> None:
         hidden = self.entry.cget("show") == "•"
         self.entry.configure(show="" if hidden else "•")
-        self.eye.configure(image=icon("eye-off" if hidden else "eye", 18, theme.MUTED))
+        self.eye.configure(image=icon("eye-off" if hidden else "eye", 15, theme.MUTED))
 
     def get(self) -> str:
         return self.entry.get().strip()
