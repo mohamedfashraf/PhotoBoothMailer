@@ -3,6 +3,13 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.1.1 (2026-11-22)
+
+- Cleaner QR screen tab: a status banner at the top shows at a glance whether guests can connect
+  (with Test and refresh buttons), **Open QR screen** is always in the top corner, and the settings
+  are grouped into two tidy cards: "What guests scan" and "How phones connect".
+- Name search is now a clear On / Off choice (the switch was hard to see in light mode).
+
 ## 1.1.0 (2026-11-22)
 
 - **New event** button (Guests screen): closes the current guest list and starts the next event.
