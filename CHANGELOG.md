@@ -3,6 +3,17 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.2.1 (2026-11-23)
+
+Caching fixes.
+
+- ZIP and photo downloads are never stored by Cloudflare (or anyone in between): a guest always
+  gets their latest photos, and every download counts as "saved". Before, Cloudflare could hand out
+  an old ZIP for up to 2 hours after more photos arrived.
+- A photo the booth re-saves under the same name (a retake) now shows up straight away on phones,
+  instead of the old picture staying for up to 5 minutes.
+- 2 new tests (59 in total).
+
 ## 1.2.0 (2026-11-22)
 
 New look: black and white, calmer and more compact.

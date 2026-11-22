@@ -27,7 +27,7 @@
       {% for r in results %}
         <li>
           <a href="/s/{{ r.token }}">
-            <img src="/t/{{ r.token }}/0.jpg" alt="" loading="lazy">
+            <img src="/t/{{ r.token }}/0.jpg?v={{ r.v }}" alt="" loading="lazy">
             <span class="r-text">
               <span class="r-name" dir="auto">{{ r.name }}</span>
               <span class="r-meta">{{ r.photo_count }} photo{% if r.photo_count != 1 %}s{% endif %}</span>

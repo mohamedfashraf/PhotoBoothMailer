@@ -139,5 +139,30 @@ def make_test_photos_dir(site):
     return sorted(photos.glob("*.jpg"))
 
 
+def test_downloads_are_never_stored_by_cloudflare(site):
+    phone, tokens, *_ = site
+    t = tokens["Omnya & Fatma"]
+    assert "no-store" in phone.get(f"/z/{t}.zip")[1]["cache-control"]
+    assert "no-store" in phone.get(f"/p/{t}/0?dl=1")[1]["cache-control"]
+    for path in (f"/t/{t}/0.jpg", f"/p/{t}/0", f"/s/{t}"):
+        assert "public" not in phone.get(path)[1].get("cache-control", "")
+
+
+def test_replaced_photo_gets_a_new_address(site):
+    """The booth re-saves Hana.jpg (same name): phones must not keep showing the old picture."""
+    import os
+    import re
+    phone, tokens, _, _, _, _, photos = site
+    t = tokens["Hana"]
+    first = re.search(rb"/t/" + t.encode() + rb"/0\.jpg\?v=(\w+)", phone.get(f"/s/{t}")[2]).group(1)
+    path = photos / "Hana.jpg"
+    stat = path.stat()
+    os.utime(path, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))  # "rewritten" 5 s later
+    time.sleep(3.1)  # let the folder memory expire (a rewrite doesn't change the folder itself)
+    second = re.search(rb"/t/" + t.encode() + rb"/0\.jpg\?v=(\w+)", phone.get(f"/s/{t}")[2]).group(1)
+    assert first != second
+    assert b"0.jpg?v=" in phone.get("/?q=hana")[2]
+
+
 def test_healthz(site):
     assert site[0].get("/healthz")[2] == b"ok"

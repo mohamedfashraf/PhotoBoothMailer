@@ -19,6 +19,7 @@ import tempfile
 import threading
 import time
 import zipfile
+import zlib
 from collections import OrderedDict
 from typing import Callable
 from urllib.parse import quote
@@ -47,6 +48,24 @@ def download_name(guest_name: str, index: int, count: int, ext: str) -> str:
     """'Omnya & Fatma - 2.jpg' (no characters phones or Windows dislike)."""
     safe = "".join(c for c in guest_name if c not in '<>:"/\\|?*').strip() or "Photo"
     return f"{safe}{f' - {index + 1}' if count > 1 else ''}{ext.lower()}"
+
+
+# Caching rules. The online link goes through Cloudflare, which keeps copies of some file types
+# (e.g. .zip, .jpg) unless told not to. "private" = only the guest's own phone may keep a copy;
+# "no-store" = nobody keeps a copy (downloads must always be fresh and always be counted).
+CACHE_PREVIEW = {"Cache-Control": "private, max-age=300"}  # URLs carry a version, so a changed photo gets a new URL
+CACHE_NEVER = {"Cache-Control": "private, no-store"}
+
+
+def photos_version(paths: list[str]) -> str:
+    """Changes whenever a photo is added, removed or replaced (even under the same file name)."""
+    parts = []
+    for path in paths:
+        try:
+            parts.append(f"{path}|{os.stat(path).st_mtime_ns}")
+        except OSError:
+            parts.append(path)
+    return format(zlib.crc32("\n".join(parts).encode("utf-8")), "x")  # same result every time the app starts
 
 
 def attachment_header(filename: str) -> str:
@@ -144,7 +163,8 @@ class GuestServer:
         if any(score >= 2 for score, _, _ in scored):  # good matches exist: drop loose "appears inside" ones
             scored = [item for item in scored if item[0] >= 2]
         scored.sort(key=lambda item: (-item[0], -item[1]))  # best match first, then most recent
-        return [{"token": s["token"], "name": s["name"], "photo_count": s["photo_count"]}
+        return [{"token": s["token"], "name": s["name"], "photo_count": s["photo_count"],
+                 "v": photos_version(self._photos(s)[:1])}
                 for _, _, s in scored[:MAX_SEARCH_RESULTS]]
 
     def _opened(self, session: dict) -> None:
@@ -223,7 +243,7 @@ class GuestServer:
             items = [{"index": i, "name": download_name(session["name"], i, count, os.path.splitext(p)[1])}
                      for i, p in enumerate(photos)]
             return page(request, "gallery.html", token=token, name=session["name"], photos=items, count=count,
-                        stamp=int(session["updated_at"]))
+                        stamp=photos_version(photos))
 
         @app.post("/s/{token}/saved")
         def saved(token: str):
@@ -241,7 +261,7 @@ class GuestServer:
                 data = self._thumbnail(found[1])
             except OSError:
                 return Response(status_code=404)
-            return Response(data, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=300"})
+            return Response(data, media_type="image/jpeg", headers=CACHE_PREVIEW)
 
         @app.get("/p/{token}/{index}")
         def photo(token: str, index: int, dl: int = 0):
@@ -250,7 +270,7 @@ class GuestServer:
                 return Response(status_code=404)
             session, path, photos = found
             ext = os.path.splitext(path)[1].lower()
-            headers = {"Cache-Control": "private, max-age=300"}
+            headers = dict(CACHE_NEVER if dl else CACHE_PREVIEW)
             if dl:
                 headers["Content-Disposition"] = attachment_header(
                     download_name(session["name"], index, len(photos), ext))
@@ -284,7 +304,7 @@ class GuestServer:
             name = download_name(session["name"], 0, 1, "") + " photos.zip"
             return StreamingResponse(chunks(), media_type="application/zip",
                                      headers={"Content-Disposition": attachment_header(name),
-                                              "Content-Length": str(size)})
+                                              "Content-Length": str(size), **CACHE_NEVER})
 
         @app.exception_handler(404)
         async def not_found(request: Request, _exc):
