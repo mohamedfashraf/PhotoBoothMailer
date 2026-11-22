@@ -7,7 +7,9 @@ No account, no router settings. The laptop just needs internet.
 
 - cloudflared.exe is looked for next to the app (or bundled inside it); otherwise it is downloaded
   once from Cloudflare's official GitHub releases into the app's data folder (about 60 MB).
-- The address is new every time the app starts.
+- The address is new every time the app starts, UNLESS a permanent address is set up: with your own
+  domain on Cloudflare you create a named tunnel, and the app runs it with its token. The address
+  then never changes (good for printed posters).
 - If it stops, it is restarted automatically.
 """
 from __future__ import annotations
@@ -29,6 +31,19 @@ EXE_NAME = "cloudflared.exe"
 URL_PATTERN = re.compile(r"https://[a-z0-9-]+\.trycloudflare\.com")
 
 OFF, DOWNLOADING, STARTING, ONLINE, ERROR = "off", "downloading", "starting", "online", "error"
+
+
+def clean_hostname(text: str) -> str:
+    """'https://Photos.MyWedding.com/' -> 'photos.mywedding.com'."""
+    text = text.strip().lower()
+    for prefix in ("https://", "http://"):
+        if text.startswith(prefix):
+            text = text[len(prefix):]
+    return text.split("/")[0].strip()
+
+
+def valid_hostname(text: str) -> bool:
+    return bool(re.fullmatch(r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}", text))
 
 
 def find_exe() -> Path | None:
@@ -85,13 +100,16 @@ class _KillWithApp:
 
 
 class Tunnel:
-    def __init__(self, port: int, on_change: Callable[[str, str], None]):
+    def __init__(self, port: int, on_change: Callable[[str, str], None], token: str = "", hostname: str = ""):
         """on_change(state, detail) is called from a background thread.
 
         detail: the public URL when ONLINE, a percentage when DOWNLOADING, a friendly message on ERROR.
         """
         self.port = port
         self.on_change = on_change
+        self.token = token.strip()
+        self.hostname = clean_hostname(hostname)
+        self.permanent = bool(self.token and self.hostname)
         self.state = OFF
         self.url = ""
         self._process: subprocess.Popen | None = None
@@ -191,23 +209,33 @@ class Tunnel:
     def _run_once(self, exe: Path) -> None:
         self._set(STARTING, "")
         flags = 0x08000000 if os.name == "nt" else 0  # CREATE_NO_WINDOW: no black console window
+        env = dict(os.environ)
+        if self.permanent:
+            # The token goes in an environment variable, so it doesn't show in the process list.
+            args = [str(exe), "tunnel", "--no-autoupdate", "run"]
+            env["TUNNEL_TOKEN"] = self.token
+        else:
+            args = [str(exe), "tunnel", "--no-autoupdate", "--url", f"http://127.0.0.1:{self.port}"]
         try:
             self._process = subprocess.Popen(
-                [str(exe), "tunnel", "--no-autoupdate", "--url", f"http://127.0.0.1:{self.port}"],
-                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, env=env,
                 creationflags=flags, text=True, encoding="utf-8", errors="replace")
         except OSError as exc:
             self._set(ERROR, f"Couldn't start the online link: {exc}")
             return
         self._job.add(self._process)
 
-        url = ""
+        url = f"https://{self.hostname}" if self.permanent else ""
         connected = False
         announced = False
+        bad_token = False
         process = self._process
         for line in process.stdout:  # ends when cloudflared exits
             if self._stop.is_set():
                 break
+            lowered = line.lower()
+            if "token" in lowered and ("invalid" in lowered or "not valid" in lowered or "unauthorized" in lowered):
+                bad_token = True
             if not url:
                 match = URL_PATTERN.search(line)
                 if match:
@@ -218,19 +246,36 @@ class Tunnel:
                 announced = True
                 threading.Thread(target=self._announce_when_reachable, args=(url, process),
                                  daemon=True).start()
-        if not self._stop.is_set():
+        if self._stop.is_set():
+            return
+        if bad_token:
+            self._set(ERROR, "Cloudflare didn't accept the tunnel token. Check it under QR screen → "
+                             "Permanent address. Trying again…")
+        else:
             self._set(ERROR, "The online link stopped (is the internet still on?). Reconnecting…")
 
     def _announce_when_reachable(self, url: str, process: subprocess.Popen) -> None:
         """Report ONLINE once the new address really answers (Cloudflare needs a few seconds)."""
         time.sleep(3)  # asking too early can make Windows remember "address not found" for a while
         deadline = time.time() + 45
-        while time.time() < deadline and not self._stop.is_set() and process.poll() is None:
+        warned = False
+        while not self._stop.is_set() and process.poll() is None:
             try:
                 with urllib.request.urlopen(url + "/healthz", timeout=8) as response:
-                    if response.status == 200:
+                    if response.status == 200 and response.read() == b"ok":
                         break
             except Exception:
+                pass
+            if time.time() > deadline:
+                if not self.permanent:
+                    break  # quick links: assume it works (some networks can't reach their own link)
+                if not warned:  # permanent address: connected, but it doesn't lead to this app (yet)
+                    warned = True
+                    self._set(ERROR, f"Connected to Cloudflare, but {self.hostname} doesn't open this app yet. "
+                                     f"In Cloudflare, the tunnel's public hostname must point to "
+                                     f"http://localhost:{self.port}. Checking again…")
+                time.sleep(8)
+            else:
                 time.sleep(2)
         if not self._stop.is_set() and process.poll() is None and process is self._process:
             self._set(ONLINE, url)

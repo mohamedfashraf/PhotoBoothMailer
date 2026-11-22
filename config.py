@@ -8,8 +8,8 @@ import sys
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
-APP_NAME = "PhotoBooth Mailer"
-APP_ID = "PhotoBoothMailer"
+APP_NAME = "PhotoBooth Share"
+APP_ID = "PhotoBoothMailer"  # internal id (kept so existing installs keep their data)
 
 # ---------------------------------------------------------------- paths
 def app_dir() -> Path:
@@ -62,6 +62,9 @@ class Settings:
     connection: str = CONNECTION_ONLINE
     server_port: int = 8000
     host_override: str = ""   # Wi-Fi address put in QR codes; "" = pick automatically
+    # Optional permanent online address (needs your own domain on Cloudflare). Empty = free changing link.
+    tunnel_hostname: str = ""  # e.g. "photos.mywedding.com"
+    tunnel_token: str = ""     # the token Cloudflare shows when you create a tunnel
     qr_mode: str = "shared"   # shared = one QR for everyone (guests search their name) | guest = QR per guest
     guest_search: bool = True  # allow finding photos by typing a name on the shared page
     appearance: str = "system"  # system | light | dark
@@ -78,6 +81,10 @@ class Settings:
     @property
     def online(self) -> bool:
         return self.connection == CONNECTION_ONLINE
+
+    @property
+    def permanent_link(self) -> bool:
+        return bool(self.tunnel_hostname and self.tunnel_token)
 
     # -- serialisation
     def to_dict(self) -> dict:

@@ -1,4 +1,4 @@
-# PhotoBooth Mailer
+# PhotoBooth Share
 
 Guests scan a QR code with their phone and save their photo booth pictures straight to their phone.
 Everything runs inside one Windows app: no accounts, no email, nothing to install on the phones.
@@ -91,12 +91,32 @@ laptop. No account or router settings needed.
 
 - The first time, the app downloads Cloudflare's small `cloudflared.exe` program (about 60 MB). The
   packaged `.exe` already includes it if it could be downloaded when the app was built.
-- The address is **new every time the app starts**. The QR screen always shows the current one. If
-  you print the poster, print it after starting the app on event day.
+- The address is **new every time the app starts** (unless you set up a permanent address, below).
+  The QR screen always shows the current one. If you print the poster, print it after starting the
+  app on event day.
 - If the internet drops, the link reconnects by itself. Until it works again, the QR screen shows
   "Getting the online link ready…" instead of a code that wouldn't work.
 - Photos travel through Cloudflare encrypted (https). The address is random and only shown in the
   QR code.
+
+**Permanent address (optional).** The free link above is meant for testing by Cloudflare and changes
+on every restart. For real events you can give the app an address that never changes, like
+`https://photos.mywedding.com`, so posters can be printed days before. You need your own domain
+(about $10 a year; Cloudflare sells them at cost) added to a free Cloudflare account. Then:
+
+1. In Cloudflare, open **Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared**, and
+   name it `photobooth`.
+2. Copy the **token**: the long text after `--token` in the install command shown. Don't run the
+   command; the app runs the tunnel itself.
+3. Add a **public hostname**: a subdomain such as `photos` plus your domain. Service: **HTTP**, URL:
+   **`localhost:8000`** (or your port from Settings).
+4. In the app: **QR screen → How phones connect → Permanent address → Set up**, paste the address
+   and the token, and press **Save**.
+
+The status turns green once the address opens the app. If it says the address "doesn't open this
+app yet", check the URL in step 3. **Remove** goes back to the free link. The token is saved in
+`settings.json` next to the app; keep that file private, since anyone with the token could take over
+the address.
 
 **Same Wi-Fi only**. No internet needed, but every phone must join the same Wi-Fi or hotspot as the
 laptop. Tip: turn on **Mobile Hotspot** on the laptop and let guests join it. The QR screen tab shows
@@ -145,7 +165,7 @@ conda activate PhotoBoothMailer
 ```
 
 This installs PyInstaller, downloads `cloudflared.exe` into `vendor\` (so the online link works
-without a download at the event) and creates **`dist\PhotoBoothMailer.exe`**: one file, no console
+without a download at the event) and creates **`dist\PhotoBoothShare.exe`**: one file, no console
 window. Copy it to the event laptop, for example into `D:\PhotoBooth\`, and double-click it. Its
 settings and database are created next to it. Opening it a second time just says it's already open.
 
@@ -153,7 +173,7 @@ settings and database are created next to it. Opening it a second time just says
 
 **The day before**
 
-- [ ] Copy `PhotoBoothMailer.exe` to the event laptop and open it once (setup guide: photos folder +
+- [ ] Copy `PhotoBoothShare.exe` to the event laptop and open it once (setup guide: photos folder +
       event name).
 - [ ] Check the booth software saves into that folder, one file per guest name (`Hana.jpg`,
       `Hana_1.jpg`).

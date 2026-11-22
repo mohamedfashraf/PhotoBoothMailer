@@ -39,7 +39,7 @@ class SetupWizard(ctk.CTkFrame):
         top.grid_columnconfigure(2, weight=1)
         icon_tile(top, "camera", size=30, fg=theme.ACCENT, color=("#FFFFFF", "#FFFFFF")).grid(
             row=0, column=0, padx=(0, 10))
-        ctk.CTkLabel(top, text="PhotoBooth Mailer", font=theme.font(15, "bold"),
+        ctk.CTkLabel(top, text=config.APP_NAME, font=theme.font(15, "bold"),
                      text_color=theme.TEXT).grid(row=0, column=1, sticky="w")
         self.step_label = ctk.CTkLabel(top, text="", font=theme.font(13), text_color=theme.MUTED)
         self.step_label.grid(row=0, column=2, sticky="e")
@@ -112,7 +112,7 @@ class SetupWizard(ctk.CTkFrame):
         WrapLabel(page, text, size=14, wraplength=640).grid(row=2, column=0, sticky="ew", pady=(4, 20))
 
     def _fill_welcome(self, page) -> None:
-        self._heading(page, "sparkles", "Welcome to PhotoBooth Mailer",
+        self._heading(page, "sparkles", f"Welcome to {config.APP_NAME}",
                       "Guests scan a QR code with their phone and save their photos straight away. "
                       "Setup takes about a minute.")
         for i, (icon_name, title, text) in enumerate([

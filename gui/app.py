@@ -9,6 +9,7 @@ from config import APP_NAME, Settings, resource_path
 import netutil
 from db import Database
 from server import GuestServer
+import tunnel as tunnel_mod
 from tunnel import Tunnel
 from watcher import FolderWatcher
 from gui import ctk_patches, icons, theme
@@ -165,9 +166,15 @@ class App(ctk.CTk):
 
     def update_tunnel(self) -> None:
         """Start or stop the online link to match the settings."""
-        if self.settings.online and self.server is not None:
+        s = self.settings
+        wanted = (s.server_port, s.tunnel_token.strip(), s.tunnel_hostname) if s.permanent_link else (s.server_port, "", "")
+        if self.tunnel is not None and (self.tunnel.port, self.tunnel.token, self.tunnel.hostname) != (
+                wanted[0], wanted[1], tunnel_mod.clean_hostname(wanted[2])):
+            self.tunnel.stop()  # permanent address added, changed or removed: start again with the new setup
+            self.tunnel = None
+        if s.online and self.server is not None:
             if self.tunnel is None:
-                self.tunnel = Tunnel(self.settings.server_port,
+                self.tunnel = Tunnel(s.server_port, token=wanted[1], hostname=wanted[2],
                                      on_change=lambda state, detail: self.events.put(("tunnel", (state, detail))))
                 self.tunnel.start()
         elif self.tunnel is not None:

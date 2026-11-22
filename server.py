@@ -17,6 +17,7 @@ import io
 import os
 import tempfile
 import threading
+import time
 import zipfile
 from collections import OrderedDict
 from typing import Callable
@@ -37,6 +38,7 @@ THUMB_WIDTH = 520
 MAX_PHOTOS = 60
 MAX_SEARCH_RESULTS = 8
 MIN_SEARCH_LETTERS = 2
+SCAN_CACHE_SECONDS = 3.0  # how long a read of the photos folder is reused
 MEDIA_TYPES = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png"}
 
 
@@ -61,6 +63,8 @@ class GuestServer:
         self.on_activity = on_activity  # (session) -> None, called from a server thread
         self._thumbs: OrderedDict[tuple, bytes] = OrderedDict()
         self._thumb_lock = threading.Lock()
+        self._scans: dict[str, tuple] = {}  # folder -> (read at, folder modified time, guests)
+        self._scan_lock = threading.Lock()
         self._server: uvicorn.Server | None = None
         self._thread: threading.Thread | None = None
         self.app = self._build_app()
@@ -84,8 +88,28 @@ class GuestServer:
         return bool(self._server and self._server.started)
 
     # ------------------------------------------------------------ helpers
+    def _scan(self, folder: str) -> dict:
+        """The folder's guests, re-read at most every couple of seconds.
+
+        One phone opening a page asks for the page plus every preview; many phones at once would
+        otherwise re-read a folder of thousands of photos dozens of times a second. Reading again
+        right away when the folder itself changed means a new photo shows up immediately.
+        """
+        try:
+            changed = os.stat(folder).st_mtime_ns
+        except OSError:
+            changed = None
+        now = time.monotonic()
+        with self._scan_lock:
+            cached = self._scans.get(folder)
+            if cached and cached[1] == changed and now - cached[0] < SCAN_CACHE_SECONDS:
+                return cached[2]
+            guests = naming.scan_folder(folder)
+            self._scans[folder] = (now, changed, guests)
+            return guests
+
     def _photos(self, session: dict) -> list[str]:
-        guest = naming.scan_folder(session["folder"]).get(session["guest_key"])
+        guest = self._scan(session["folder"]).get(session["guest_key"])
         return [str(p) for p in guest.photos][:MAX_PHOTOS] if guest else []
 
     def _thumbnail(self, path: str) -> bytes:

@@ -15,15 +15,27 @@ from config import Settings
 from db import Database
 from gui import theme
 from gui.qr_window import make_poster
-from gui.widgets import Card, StatusLine, WrapLabel, icon_tile, primary_button, secondary_button, title_label
+from gui.widgets import (Card, Field, StatusLine, WrapLabel, icon_tile, link_button, primary_button,
+                         secondary_button, title_label)
 
 AUTO = "Automatic"
 CONNECTIONS = {"online": "Any network (online link)", "wifi": "Same Wi-Fi only"}
 CONNECTION_TEXT = {
     "online": "Recommended. Phones can be on any Wi-Fi or on mobile data. The laptop needs internet. "
-              "The link is new every time the app starts.",
+              "The link is new every time the app starts (unless you set up a permanent address below).",
+    "permanent": "Recommended. Phones can be on any Wi-Fi or on mobile data. The laptop needs internet. "
+                 "Your permanent address never changes, so printed posters keep working.",
     "wifi": "No internet needed, but every phone must join the same Wi-Fi or hotspot as this laptop.",
 }
+PERMANENT_STEPS = (
+    "Needs your own domain (a web address like mywedding-photos.com, about $10 a year) added to a free "
+    "Cloudflare account. Then:\n"
+    "1.  In Cloudflare, open Zero Trust → Networks → Tunnels → Create a tunnel → Cloudflared. Name it "
+    "\"photobooth\".\n"
+    "2.  Copy the token: the long text after --token in the install command. (Don't run that command.)\n"
+    "3.  Add a public hostname: e.g. photos + your domain. Service: HTTP, URL: localhost:{port}\n"
+    "4.  Paste the address and the token below and press Save."
+)
 MODES = {"shared": "One QR for everyone", "guest": "A QR per guest"}
 MODE_TEXT = {
     "shared": "Guests scan the same code, type their name and pick their photos. Show it on the QR screen, "
@@ -118,6 +130,41 @@ class QRPanel(ctk.CTkFrame):
                                  f"Using the laptop's own hotspot? Pick {netutil.HOTSPOT_IP} if it's listed.",
                   size=12).grid(row=2, column=0, sticky="ew", pady=(6, 0))
 
+        # Online only: optional permanent address (own domain + Cloudflare named tunnel)
+        self.perm_box = ctk.CTkFrame(net.body, fg_color=theme.FIELD, corner_radius=12)
+        self.perm_box.grid(row=3, column=0, sticky="ew", pady=(16, 0))
+        self.perm_box.grid_columnconfigure(0, weight=1)
+        top = ctk.CTkFrame(self.perm_box, fg_color="transparent")
+        top.grid(row=0, column=0, sticky="ew", padx=14, pady=12)
+        top.grid_columnconfigure(0, weight=1)
+        ctk.CTkLabel(top, text="Permanent address (optional)", font=theme.font(13, "bold"),
+                     text_color=theme.TEXT, anchor="w").grid(row=0, column=0, sticky="w")
+        self.perm_summary = WrapLabel(top, "", size=12)
+        self.perm_summary.grid(row=1, column=0, sticky="ew", pady=(2, 0))
+        self.perm_toggle = secondary_button(top, "Set up", self._toggle_permanent, icon_name="settings", width=130)
+        self.perm_toggle.grid(row=0, column=1, rowspan=2, sticky="e", padx=(12, 0))
+
+        self.perm_form = ctk.CTkFrame(self.perm_box, fg_color="transparent")
+        self.perm_form.grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 14))
+        self.perm_form.grid_columnconfigure((0, 1), weight=1, uniform="perm")
+        self.perm_steps = WrapLabel(self.perm_form, "", size=12)
+        self.perm_steps.grid(row=0, column=0, columnspan=2, sticky="ew")
+        link_button(self.perm_form, "Open Cloudflare", "https://one.dash.cloudflare.com/").grid(
+            row=1, column=0, sticky="w", pady=(8, 12))
+        self.perm_host = Field(self.perm_form, "Your address", placeholder="photos.mywedding.com")
+        self.perm_host.grid(row=2, column=0, sticky="new", padx=(0, 8))
+        self.perm_token = Field(self.perm_form, "Tunnel token", placeholder="eyJhIjoi…", secret=True)
+        self.perm_token.grid(row=2, column=1, sticky="new", padx=(8, 0))
+        buttons = ctk.CTkFrame(self.perm_form, fg_color="transparent")
+        buttons.grid(row=3, column=0, columnspan=2, sticky="w", pady=(12, 0))
+        primary_button(buttons, "Save", self._save_permanent, icon_name="save", width=120).pack(side="left")
+        self.perm_remove = secondary_button(buttons, "Remove (use the free link)", self._remove_permanent,
+                                            icon_name="rotate-ccw", width=240)
+        self.perm_remove.pack(side="left", padx=(10, 0))
+        self.perm_status = StatusLine(self.perm_form)
+        self.perm_status.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 0))
+        self.perm_form.grid_remove()
+
         row = ctk.CTkFrame(net.body, fg_color="transparent")
         row.grid(row=4, column=0, sticky="w", pady=(16, 0))
         secondary_button(row, "Open guest page on this laptop", self._open_test_page, icon_name="external-link",
@@ -130,12 +177,21 @@ class QRPanel(ctk.CTkFrame):
     # ------------------------------------------------------------ actions
     def refresh(self) -> None:
         online = self.settings.online
+        permanent = self.settings.permanent_link
         self.connection.set(CONNECTIONS["online" if online else "wifi"])
-        self.connection_text.configure(text=CONNECTION_TEXT["online" if online else "wifi"])
+        self.connection_text.configure(
+            text=CONNECTION_TEXT["wifi" if not online else "permanent" if permanent else "online"])
         if online:
             self.wifi_box.grid_remove()
+            self.perm_box.grid()
         else:
             self.wifi_box.grid()
+            self.perm_box.grid_remove()
+        self.perm_summary.configure(
+            text=f"In use: https://{self.settings.tunnel_hostname}" if permanent else
+            "Same address every time, so printed posters keep working. Needs your own domain.")
+        self.perm_toggle.configure(text="Change" if permanent else "Set up")
+        self.perm_steps.configure(text=PERMANENT_STEPS.format(port=self.settings.server_port))
         ips = netutil.lan_ips()
         values = [AUTO] + ips[:3]
         if self.settings.host_override and self.settings.host_override not in values:
@@ -163,6 +219,52 @@ class QRPanel(ctk.CTkFrame):
         else:
             base = netutil.base_url(self.settings.server_port, self.settings.host_override)
             self.status.show("ok", f"Guest page is running at {base}")
+
+    # ------------------------------------------------------------ permanent address
+    def _toggle_permanent(self) -> None:
+        if self.perm_form.winfo_manager():
+            self.perm_form.grid_remove()
+            return
+        self.perm_host.set(self.settings.tunnel_hostname)
+        self.perm_token.set(self.settings.tunnel_token)
+        self.perm_status.clear()
+        if self.settings.permanent_link:
+            self.perm_remove.pack(side="left", padx=(10, 0))
+        else:
+            self.perm_remove.pack_forget()
+        self.perm_form.grid()
+
+    def _save_permanent(self) -> None:
+        host = tunnel_mod.clean_hostname(self.perm_host.get())
+        token = "".join(self.perm_token.get().split())
+        if token.lower().startswith("--token"):
+            token = token[7:]
+        problems = False
+        if not tunnel_mod.valid_hostname(host):
+            self.perm_host.set_error("Type the full address, e.g. photos.mywedding.com")
+            problems = True
+        if len(token) < 60:
+            self.perm_token.set_error("That looks too short. Copy the whole long text after --token.")
+            problems = True
+        if problems:
+            return
+        self.settings.tunnel_hostname, self.settings.tunnel_token = host, token
+        self._store_permanent("Saved. Connecting with your permanent address…")
+
+    def _remove_permanent(self) -> None:
+        self.settings.tunnel_hostname = self.settings.tunnel_token = ""
+        self._store_permanent("Removed. Using the free link again.")
+
+    def _store_permanent(self, message: str) -> None:
+        try:
+            config.save(self.settings)
+        except OSError as exc:
+            self.perm_status.show("error", f"Couldn't save: {exc}")
+            return
+        self.perm_form.grid_remove()
+        self.on_change()  # the app restarts the online link with the new setup
+        self.hero_status.grid()
+        self.hero_status.show("ok", message)
 
     def set_tunnel(self, state: str, detail: str) -> None:
         self._tunnel_detail = detail
@@ -232,7 +334,8 @@ class QRPanel(ctk.CTkFrame):
             return
         self.hero_status.grid()
         note = (" The online link changes when the app restarts, so print it after starting the app on "
-                "event day (or use Same Wi-Fi only)." if self.settings.online else "")
+                "event day (or set up a permanent address)." if self.settings.online
+                and not self.settings.permanent_link else "")
         self.hero_status.show("ok", f"Poster saved: {path}. Open it and print it (A4).{note}")
 
     def _open_test_page(self) -> None:

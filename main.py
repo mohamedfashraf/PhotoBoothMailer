@@ -1,4 +1,4 @@
-"""PhotoBooth Mailer — entry point.
+"""PhotoBooth Share — entry point.
 
     python main.py
     python main.py --folder "D:\\Booth\\Photos"     (use this folder for this run)
@@ -15,7 +15,7 @@ from gui import theme
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(prog="PhotoBoothMailer", description="Share photo booth pictures with guests by QR code.")
+    parser = argparse.ArgumentParser(prog="PhotoBoothShare", description="Share photo booth pictures with guests by QR code.")
     parser.add_argument("--folder", help="Photos folder to watch (overrides the saved setting for this run)")
     parser.add_argument("--setup", action="store_true", help="Open the setup guide")
     return parser.parse_args(argv)

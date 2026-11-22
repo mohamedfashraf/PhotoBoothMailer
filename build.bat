@@ -1,5 +1,5 @@
 @echo off
-REM Build dist\PhotoBoothMailer.exe (one file, no console window).
+REM Build dist\PhotoBoothShare.exe (one file, no console window).
 REM Run from a terminal where Python is available (the conda env, or the .venv folder).
 setlocal
 cd /d "%~dp0"
@@ -29,7 +29,7 @@ for /f "delims=" %%P in ('%PY% -c "import sys; print(sys.base_prefix)"') do set 
 if exist "%PYBASE%\Library\bin\tk86t.dll" set "PATH=%PYBASE%\Library\bin;%PATH%"
 if defined CONDA_PREFIX if exist "%CONDA_PREFIX%\Library\bin\tk86t.dll" set "PATH=%CONDA_PREFIX%\Library\bin;%PATH%"
 %PY% -m PyInstaller --noconfirm --clean --onefile --windowed ^
-    --name PhotoBoothMailer ^
+    --name PhotoBoothShare ^
     --icon assets\app.ico ^
     --add-data "assets;assets" ^
     --add-data "templates;templates" ^
@@ -41,7 +41,7 @@ if defined CONDA_PREFIX if exist "%CONDA_PREFIX%\Library\bin\tk86t.dll" set "PAT
 
 echo === 4/4  Done
 echo.
-echo     dist\PhotoBoothMailer.exe is ready. Copy it to the event laptop and double-click it.
+echo     dist\PhotoBoothShare.exe is ready. Copy it to the event laptop and double-click it.
 echo     Its settings and database are saved next to it.
 echo.
 exit /b 0
