@@ -22,7 +22,7 @@ class FolderPicker(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
 
         self.pill = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=8, border_width=1,
-                                 border_color=theme.BORDER, height=34)
+                                 border_color=theme.INPUT_BORDER, height=36)
         self.pill.grid(row=0, column=0, sticky="ew")
         self.pill.grid_propagate(False)
         self.pill.grid_columnconfigure(1, weight=1)
@@ -32,7 +32,7 @@ class FolderPicker(ctk.CTkFrame):
         self.path_label = ctk.CTkLabel(self.pill, text="", font=theme.font(14), anchor="w")
         self.path_label.grid(row=0, column=1, sticky="ew", padx=(0, 12))
 
-        secondary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=150, height=34).grid(
+        secondary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=150, height=36).grid(
             row=0, column=1, padx=(10, 0))
 
         self.status = StatusLine(self)
@@ -48,7 +48,7 @@ class FolderPicker(ctk.CTkFrame):
 
     def set_path(self, path: str) -> None:
         self.path = path or ""
-        self.pill.configure(border_color=theme.BORDER)
+        self.pill.configure(border_color=theme.INPUT_BORDER)
         ok = bool(self.path) and os.path.isdir(self.path)
         self.pill_icon.configure(image=icon("folder-check" if ok else "folder", 18,
                                             theme.SUCCESS if ok else theme.MUTED))
@@ -96,7 +96,7 @@ class EventFields(ctk.CTkFrame):
                      text_color=theme.MUTED, anchor="w", height=16).grid(row=1, column=0, sticky="ew",
                                                                           pady=(14, 6))
         preview = ctk.CTkFrame(self, fg_color=theme.SOFT, corner_radius=10, border_width=0,
-                               border_color=theme.BORDER)
+                               border_color=theme.INPUT_BORDER)
         preview.grid(row=2, column=0, sticky="ew")
         preview.grid_columnconfigure(1, weight=1)
         icon_tile(preview, "camera", size=36, fg=theme.PRIMARY, color=theme.PRIMARY_TEXT).grid(row=0, column=0, rowspan=2, padx=(14, 12), pady=12)

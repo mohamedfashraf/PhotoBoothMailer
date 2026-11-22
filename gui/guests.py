@@ -120,6 +120,8 @@ class GuestsView(ctk.CTkFrame):
 
     # ------------------------------------------------------------ styling (ttk follows light/dark)
     def _style_table(self) -> None:
+        if not self.winfo_exists():  # the window was closed (the light/dark tracker may still call us)
+            return
         i = _mode_index()
         scale = ctk.ScalingTracker.get_widget_scaling(self)
         style = ttk.Style(self)

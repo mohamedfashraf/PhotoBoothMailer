@@ -10,7 +10,7 @@ from pathlib import Path
 
 APP_NAME = "PhotoBooth Share"
 APP_ID = "PhotoBoothMailer"  # internal id (kept so existing installs keep their data)
-APP_VERSION = "1.3.0"  # bump for every release (see CHANGELOG.md and dev/release.py)
+APP_VERSION = "1.3.1"  # bump for every release (see CHANGELOG.md and dev/release.py)
 DEVELOPER = "mohamedfashraf"                       # shown in the app's footer
 DEVELOPER_URL = "https://github.com/mohamedfashraf"
 GITHUB_REPO = "mohamedfashraf/PhotoBoothMailer"    # where "Check for updates" looks for new versions

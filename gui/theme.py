@@ -28,8 +28,10 @@ PRIMARY_TEXT = ("#FFFFFF", "#18181B")
 BG = ("#FAFAFA", "#0C0C0E")
 SIDEBAR = ("#F4F4F5", "#121215")
 CARD = ("#FFFFFF", "#17171A")
-BORDER = ("#E4E4E7", "#27272A")
+BORDER = ("#E4E4E7", "#303036")  # hairlines: cards, buttons (a bit stronger in dark mode)
 FIELD = ("#FFFFFF", "#1C1C20")
+INPUT_BORDER = ("#D4D4D8", "#45454D")  # text boxes: clearly visible in light and dark
+INPUT_FOCUS = ("#71717A", "#A1A1AA")   # the box you are typing in
 SOFT = ("#F4F4F5", "#202024")
 SOFT_HOVER = ("#E9E9EC", "#2A2A2F")
 

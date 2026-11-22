@@ -3,6 +3,13 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.3.1 (2026-11-23)
+
+- Outlines: text boxes have a clearer outline (and a darker one while you type in them); cards and
+  buttons are easier to see in dark mode.
+- Fixed clipped bottom corners on text boxes (customtkinter draws them badly at certain sizes).
+- Fixed the QR screen's Full screen button sticking out of its rounded bar in "One QR for everyone" mode.
+
 ## 1.3.0 (2026-11-23)
 
 - **Instagram follow popup** (Settings → Guest page → Instagram): turn it on, type your account and,

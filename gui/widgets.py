@@ -136,7 +136,7 @@ def secondary_button(master, text: str, command: Callable | None = None, icon_na
 def icon_button(master, icon_name: str, command: Callable | None = None, size: int = 34) -> ctk.CTkButton:
     """A square button with just an icon (e.g. refresh)."""
     return ctk.CTkButton(master, text="", image=icon(icon_name, 15, theme.MUTED), width=size, height=size,
-                         fg_color=theme.CARD, border_width=1, border_color=theme.BORDER, hover_color=theme.SOFT,
+                         fg_color=theme.CARD, border_width=1, border_color=theme.INPUT_BORDER, hover_color=theme.SOFT,
                          corner_radius=8, command=command)
 
 
@@ -224,21 +224,35 @@ class Field(ctk.CTkFrame):
                                   anchor="w", height=18)
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
-        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=34, corner_radius=8,
-                                  border_width=1, border_color=theme.BORDER, fg_color=theme.FIELD,
+        # Height 36, not 34: at 150% display scaling 34 draws clipped bottom corners in customtkinter.
+        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=36, corner_radius=8,
+                                  border_width=1, border_color=theme.INPUT_BORDER, fg_color=theme.FIELD,
                                   text_color=theme.TEXT, placeholder_text_color=theme.FAINT,
                                   font=theme.font(13), show="•" if secret else "")
         self.entry.grid(row=1, column=0, sticky="ew", pady=(5, 0))
         self.entry.bind("<KeyRelease>", self._changed)
+        self._has_error = False
+        self.entry.bind("<FocusIn>", lambda _e: self._outline(), add="+")
+        self.entry.bind("<FocusOut>", lambda _e: self._outline(), add="+")
 
         if secret:
-            self.eye = icon_button(self, "eye", self._toggle_secret)
+            self.eye = icon_button(self, "eye", self._toggle_secret, size=36)
             self.eye.grid(row=1, column=1, padx=(6, 0), pady=(5, 0))
 
         self.hint = WrapLabel(self, hint, size=12, wraplength=300)
         self.hint.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(3, 0))
         if not hint:
             self.hint.grid_remove()
+
+    def _outline(self) -> None:
+        """Red when there's a problem, darker while typing, otherwise the normal outline."""
+        if self._has_error:
+            color = theme.ERROR
+        elif self.focus_get() is self.entry._entry:
+            color = theme.INPUT_FOCUS
+        else:
+            color = theme.INPUT_BORDER
+        self.entry.configure(border_color=color)
 
     def _changed(self, _event=None) -> None:
         self.set_error(None)
@@ -270,12 +284,12 @@ class Field(ctk.CTkFrame):
         self.set_error(None)
 
     def set_error(self, message: str | None) -> None:
+        self._has_error = bool(message)
+        self._outline()
         if message:
-            self.entry.configure(border_color=theme.ERROR)
             self.hint.configure(text=message, text_color=theme.ERROR)
             self.hint.grid()
         else:
-            self.entry.configure(border_color=theme.BORDER)
             self.hint.configure(text=self._hint_text, text_color=theme.MUTED)
             if self._hint_text:
                 self.hint.grid()

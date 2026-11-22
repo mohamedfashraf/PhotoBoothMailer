@@ -353,6 +353,9 @@ class QRWindow(ctk.CTkToplevel):
                 widget.grid_remove()
             else:
                 widget.grid()
+        # When Full screen is the only button, it needs space on its left too, or its square background
+        # is drawn over the pill's rounded edge.
+        self.full_button.grid_configure(padx=6 if shared else (0, 6))
         self.counter.configure(text=f"{self.index + 1} of {count}" if count else "–")
         self.prev_button.configure(state="normal" if self.index > 0 else "disabled")
         self.next_button.configure(state="normal" if 0 <= self.index < count - 1 else "disabled")
