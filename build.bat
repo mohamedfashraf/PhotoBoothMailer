@@ -43,6 +43,9 @@ echo === 4/4  Saving a copy of this version
 for /f "delims=" %%V in ('%PY% -c "import config; print(config.APP_VERSION)"') do set VERSION=%%V
 if not exist "releases" mkdir releases
 copy /y "dist\PhotoBoothShare.exe" "releases\PhotoBoothShare-%VERSION%.exe" >nul || goto :error
+REM PyInstaller's scratch files are not needed once the .exe exists.
+if exist "build" rmdir /s /q "build"
+if exist "PhotoBoothShare.spec" del /q "PhotoBoothShare.spec"
 echo.
 echo     dist\PhotoBoothShare.exe is ready (version %VERSION%). Copy it to the event laptop and double-click it.
 echo     A copy is kept as releases\PhotoBoothShare-%VERSION%.exe
