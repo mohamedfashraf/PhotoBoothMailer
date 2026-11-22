@@ -1,8 +1,10 @@
 """Guests screen: a live list of everyone the folder watcher has found."""
 from __future__ import annotations
 
+import csv
+import os
 from datetime import datetime
-from tkinter import ttk
+from tkinter import filedialog, ttk
 
 import customtkinter as ctk
 
@@ -10,7 +12,8 @@ from config import Settings
 from db import STATUS_READY, Database
 from gui import theme
 from gui.icons import icon
-from gui.widgets import Card, WrapLabel, icon_tile, rtl_fix, show_page, shorten_path, title_label
+from gui.widgets import (Card, StatusLine, WrapLabel, icon_tile, rtl_fix, secondary_button, show_page,
+                         shorten_path, title_label)
 
 COLUMNS = [  # id, heading, width, anchor
     ("guest", "GUEST", 260, "w"),
@@ -26,9 +29,12 @@ def _mode_index() -> int:
 
 
 class GuestsView(ctk.CTkFrame):
-    def __init__(self, master, settings: Settings, db: Database, on_open=None):
+    def __init__(self, master, settings: Settings, db: Database, on_open=None, on_new_event=None,
+                 url_for=None):
         super().__init__(master, fg_color=theme.BG, corner_radius=0)
         self.on_open = on_open  # called with a session id to show that guest's QR code
+        self.on_new_event = on_new_event  # opens the "New event" window
+        self.url_for = url_for  # token -> guest page address (for the exported list)
         self.settings = settings
         self.db = db
         self.rows: dict[int, dict] = {}
@@ -47,6 +53,16 @@ class GuestsView(ctk.CTkFrame):
         self.guest_chip = self._chip(chips, "users")
         self.photo_chip = self._chip(chips, "images")
         self.sent_chip = self._chip(chips, "circle-check", color=theme.SUCCESS)
+
+        actions = ctk.CTkFrame(header, fg_color="transparent")
+        actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(12, 0))
+        actions.grid_columnconfigure(2, weight=1)
+        secondary_button(actions, "New event", self.on_new_event, icon_name="party-popper", height=34,
+                         width=140).grid(row=0, column=0)
+        secondary_button(actions, "Export list", self._export, icon_name="save", height=34,
+                         width=140).grid(row=0, column=1, padx=(8, 0))
+        self.export_status = StatusLine(actions)
+        self.export_status.grid(row=0, column=2, sticky="ew", padx=(14, 0))
 
         # Body: the table and an empty state, stacked; we raise whichever applies.
         body = Card(self)
@@ -183,6 +199,41 @@ class GuestsView(ctk.CTkFrame):
             self.empty_message.configure(text=f"As soon as the booth saves photos into\n{folder}\n"
                                               "each guest will show up here.")
             show_page(self.empty_page)
+
+    # ------------------------------------------------------------ export
+    def _export(self) -> None:
+        """Save the guest list as a spreadsheet (CSV; opens in Excel, Arabic names included)."""
+        sessions = [s for s in self.db.sessions_for(self.settings.watch_folder) if s["photo_count"] > 0] \
+            if self.settings.watch_folder else []
+        if not sessions:
+            self.export_status.show("info", "No guests to export yet.")
+            return
+        safe_event = "".join(c for c in (self.settings.event_name or "Guests") if c not in '<>:"/\\|?*').strip()
+        path = filedialog.asksaveasfilename(
+            parent=self.winfo_toplevel(), title="Export the guest list", defaultextension=".csv",
+            initialfile=f"{safe_event} - guests.csv", initialdir=os.path.join(os.path.expanduser("~"), "Documents"),
+            filetypes=[("Spreadsheet (CSV)", "*.csv")])
+        if not path:
+            return
+
+        def when(ts):
+            return datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M") if ts else ""
+
+        try:
+            with open(path, "w", newline="", encoding="utf-8-sig") as f:  # -sig: Excel shows Arabic correctly
+                writer = csv.writer(f)
+                writer.writerow(["Guest", "Photos", "Status", "Added", "Opened page", "Saved photos",
+                                 "Times saved", "Link code", "Link"])
+                for s in reversed(sessions):  # oldest first, like the booth's order
+                    status = self._status(s)[0].split("  ", 1)[-1]
+                    link = self.url_for(s["token"]) if self.url_for and s["status"] == STATUS_READY else ""
+                    writer.writerow([s["name"], s["photo_count"], status, when(s["created_at"]),
+                                     when(s.get("opened_at")), when(s.get("downloaded_at")), s.get("downloads") or 0,
+                                     s["token"], link])
+        except OSError as exc:
+            self.export_status.show("error", f"Couldn't save the list: {exc}")
+            return
+        self.export_status.show("ok", f"Saved {len(sessions)} guests to {shorten_path(path, 40)}")
 
     def refresh(self) -> None:
         self.reload()

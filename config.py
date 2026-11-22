@@ -10,7 +10,7 @@ from pathlib import Path
 
 APP_NAME = "PhotoBooth Share"
 APP_ID = "PhotoBoothMailer"  # internal id (kept so existing installs keep their data)
-APP_VERSION = "1.0.1"  # bump for every release (see CHANGELOG.md and dev/release.py)
+APP_VERSION = "1.1.0"  # bump for every release (see CHANGELOG.md and dev/release.py)
 
 # ---------------------------------------------------------------- paths
 def app_dir() -> Path:
@@ -69,6 +69,8 @@ class Settings:
     qr_mode: str = "shared"   # shared = one QR for everyone (guests search their name) | guest = QR per guest
     guest_search: bool = True  # allow finding photos by typing a name on the shared page
     appearance: str = "system"  # system | light | dark
+    brand_color: str = ""      # guest page colour, e.g. "#E11D48" ("" = the app's own colour)
+    brand_message: str = ""    # optional line on the guest's photos page, e.g. "Thank you for coming!"
     setup_complete: bool = False
 
     @property

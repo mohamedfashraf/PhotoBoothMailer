@@ -126,6 +126,19 @@ class Database:
                 " ORDER BY ready_at, id", (normalise_folder(folder),)).fetchall()
             return [dict(r) for r in rows]
 
+    def close_event(self, folder: str, now: float | None = None) -> int:
+        """End the current event for this folder: its guests and link codes stop working.
+
+        Without this, the next event using the same folder would give a returning name (e.g. "Hana")
+        the SAME link code, so last event's guest could open the new guest's photos. The rows are kept
+        (moved to an "ended" folder name) and the photos themselves are never touched.
+        """
+        folder = normalise_folder(folder)
+        with self._write_lock, self._connect() as conn:
+            cursor = conn.execute("UPDATE sessions SET folder = folder || ? WHERE folder=?",
+                                  (f"|ended:{int(now or time.time())}", folder))
+            return cursor.rowcount
+
     # ------------------------------------------------------------ guest activity
     def mark_opened(self, session_id: int, now: float | None = None) -> dict:
         """The guest opened their photos page."""

@@ -5,6 +5,7 @@ import queue
 
 import customtkinter as ctk
 
+import config
 from config import APP_NAME, APP_VERSION, Settings, resource_path
 import netutil
 from db import Database
@@ -40,6 +41,21 @@ def _work_area(root) -> tuple[float, float]:
         return root.winfo_screenwidth(), root.winfo_screenheight() - 60
 
 
+def keep_awake(on: bool) -> None:
+    """While the app is open, stop Windows from sleeping or turning the screen off.
+
+    Sleep would stop the guest page and the online link for everyone. Windows forgets this request as
+    soon as the app closes, even after a crash.
+    """
+    try:
+        import ctypes
+        ES_CONTINUOUS, ES_SYSTEM_REQUIRED, ES_DISPLAY_REQUIRED = 0x80000000, 0x00000001, 0x00000002
+        flags = ES_CONTINUOUS | (ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED if on else 0)
+        ctypes.windll.kernel32.SetThreadExecutionState(flags)
+    except Exception:
+        pass
+
+
 class App(ctk.CTk):
     def __init__(self, settings: Settings, force_setup: bool = False):
         super().__init__()
@@ -70,6 +86,7 @@ class App(ctk.CTk):
         self.qr_window: QRWindow | None = None
         self.protocol("WM_DELETE_WINDOW", self._on_close)
         self.after(250, self._poll_events)
+        keep_awake(True)  # the guest page and the QR screen must keep working all event long
 
         if force_setup or not settings.setup_complete:
             self.show_wizard()
@@ -265,6 +282,7 @@ class App(ctk.CTk):
         self.after(250, self._poll_events)
 
     def _on_close(self) -> None:
+        keep_awake(False)
         self.stop_watcher()
         if self.tunnel is not None:
             self.tunnel.stop()
@@ -272,9 +290,36 @@ class App(ctk.CTk):
             self.server.stop()
         self.destroy()
 
+    # ------------------------------------------------------------ new event
+    def ask_new_event(self) -> None:
+        from gui.new_event import NewEventDialog
+        guests = len([s for s in self.db.sessions_for(self.settings.watch_folder) if s["photo_count"] > 0]) \
+            if self.settings.watch_folder else 0
+        NewEventDialog(self, self.settings, guests, on_start=self.start_new_event)
+
+    def start_new_event(self, name: str, folder: str) -> None:
+        """Close the current guest list (its links stop working) and start fresh."""
+        self.stop_watcher()
+        if self.settings.watch_folder:
+            self.db.close_event(self.settings.watch_folder)
+        self.settings.event_name = name
+        self.settings.watch_folder = folder
+        try:
+            config.save(self.settings)
+        except OSError:
+            pass
+        self.start_watcher()
+        self.refresh_sidebar()  # also reloads the Guests list and the QR panel
+        if self.qr_window is not None and self.qr_window.winfo_exists():
+            self.qr_window.reload()
+        self.select("guests")
+        self.views["guests"].export_status.show("ok", f"New event started: {name}")
+
     def _settings_saved(self) -> None:
         self.start_watcher()  # restarts only if the folder changed
         self.refresh_sidebar()
+        if self.qr_window is not None and self.qr_window.winfo_exists():
+            self.qr_window._render()  # event name or logo may have changed
 
     def _build_main(self, parent) -> None:
         parent.grid_columnconfigure(1, weight=1)
@@ -362,7 +407,8 @@ class App(ctk.CTk):
                             shared_url=self.shared_url, get_tunnel=lambda: self.tunnel,
                             on_change=self._qr_address_changed)
             return panel
-        return GuestsView(self.content, self.settings, self.db, on_open=self.open_qr)
+        return GuestsView(self.content, self.settings, self.db, on_open=self.open_qr,
+                          on_new_event=self.ask_new_event, url_for=self.url_for)
 
 
 class EmptyState(ctk.CTkFrame):

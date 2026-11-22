@@ -3,6 +3,20 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.1.0 (2026-11-22)
+
+- **New event** button (Guests screen): closes the current guest list and starts the next event.
+  Fixes a real risk: with the same photos folder, a returning name like "Hana" used to keep last
+  event's link, so last event's guest could open the new guest's photos.
+- **Export list**: save the guest list as a spreadsheet (works in Excel, Arabic included).
+- **Name search switch** (QR screen tab): turn it off after the event so nobody can browse names;
+  personal QR codes keep working.
+- **Guest page look** (Settings): your colour, logo and a short message on guests' phones; the logo
+  also shows on the QR screen.
+- The laptop no longer sleeps or turns its screen off while the app is open.
+- Fixed: a guest with an Arabic name and one photo got a nameless download on old browsers.
+- Automated tests (57) in `tests/`; `dev/release.py` runs them before every release.
+
 ## 1.0.1 (2026-11-22)
 
 - A progress bar shows the online link being set up: it fills during the first-time download, then

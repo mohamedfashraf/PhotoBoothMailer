@@ -87,6 +87,17 @@ class QRPanel(ctk.CTkFrame):
         self.mode.grid(row=1, column=1, sticky="w", pady=(8, 0))
         self.mode_text = WrapLabel(hero.body, "", size=14)
         self.mode_text.grid(row=2, column=1, sticky="ew", pady=(8, 12))
+        # Shared QR only: let anyone with the link look up guests by name, or not.
+        self.search_box = ctk.CTkFrame(hero.body, fg_color=theme.FIELD, corner_radius=12)
+        self.search_box.grid(row=6, column=1, sticky="ew", pady=(14, 0))
+        self.search_box.grid_columnconfigure(0, weight=1)
+        self.search_switch = ctk.CTkSwitch(
+            self.search_box, text="Guests can find their photos by typing their name", command=self._on_search,
+            font=theme.font(13, "bold"), text_color=theme.TEXT, progress_color=theme.ACCENT,
+            button_color=("#FFFFFF", "#FFFFFF"), button_hover_color=("#F1F1F5", "#F1F1F5"), fg_color=theme.SOFT_HOVER)
+        self.search_switch.grid(row=0, column=0, sticky="w", padx=14, pady=(12, 2))
+        self.search_text = WrapLabel(self.search_box, "", size=12)
+        self.search_text.grid(row=1, column=0, sticky="ew", padx=14, pady=(0, 12))
         buttons = ctk.CTkFrame(hero.body, fg_color="transparent")
         buttons.grid(row=3, column=1, sticky="w")
         primary_button(buttons, "Open QR screen", open_qr, icon_name="qr-code", width=190).pack(side="left")
@@ -339,9 +350,27 @@ class QRPanel(ctk.CTkFrame):
         self.mode_text.configure(text=MODE_TEXT[mode])
         self.hero_status.grid_remove()
         if mode == "shared":
+            self.search_box.grid()
+            (self.search_switch.select if self.settings.guest_search else self.search_switch.deselect)()
+            self.search_text.configure(text=(
+                "On: anyone with the link can look up guests by name. Turn it off after the event so nobody "
+                "can browse names; personal QR codes and links keep working." if self.settings.guest_search else
+                "Off: the shared QR code no longer finds photos. Personal QR codes and links still work."))
+        else:
+            self.search_box.grid_remove()
+        if mode == "shared":
             self.poster_button.pack(side="left", padx=(10, 0))
         else:
             self.poster_button.pack_forget()
+
+    def _on_search(self) -> None:
+        self.settings.guest_search = bool(self.search_switch.get())
+        try:
+            config.save(self.settings)
+        except OSError:
+            pass
+        self._show_mode()
+        self.on_change()
 
     def refresh_mode(self) -> None:
         self._show_mode()

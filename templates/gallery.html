@@ -9,6 +9,8 @@
     Save {% if count == 1 %}it{% else %}them{% endif %} to your phone before you go.
   </p>
 
+  {% if brand_message %}<p class="message" dir="auto">{{ brand_message }}</p>{% endif %}
+
   <a id="save-all" class="button" href="/z/{{ token }}.zip" download>
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
     <span class="label">{% if count == 1 %}Save my photo{% else %}Save all {{ count }} photos{% endif %}</span>

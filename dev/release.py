@@ -6,7 +6,7 @@ Before running it:
   3. Run build.bat (it saves releases\\PhotoBoothShare-1.1.0.exe).
   4. Commit everything.
 
-Then:   python dev/release.py
+Then:   python dev/release.py   (it runs the tests first and stops if any fail)
 
 It uses the GitHub login Git already has saved on this PC (nothing is printed or stored).
 """
@@ -64,6 +64,13 @@ def main() -> None:
         fail(f'CHANGELOG.md has no "## {version}" section. Add one first.')
     if not exe.is_file():
         fail(f"{exe.relative_to(ROOT)} doesn't exist. Run build.bat first.")
+
+    print("  running the tests...")
+    tests = subprocess.run([sys.executable, "-m", "pytest", "-q"], cwd=ROOT, capture_output=True, text=True)
+    if tests.returncode != 0:
+        print(tests.stdout[-3000:])
+        fail("some tests failed (see above). Fix them before releasing.")
+    print("  " + (tests.stdout.strip().splitlines() or ["tests passed"])[-1])
 
     remote = git("remote", "get-url", "origin")
     match = re.search(r"github\.com[:/]([^/]+)/([^/]+?)(?:\.git)?$", remote)

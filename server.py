@@ -30,6 +30,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from PIL import Image, ImageOps
 
+import branding
 import naming
 from config import Settings, resource_path
 from db import STATUS_READY, Database
@@ -49,10 +50,11 @@ def download_name(guest_name: str, index: int, count: int, ext: str) -> str:
 
 
 def attachment_header(filename: str) -> str:
-    ascii_name = filename.encode("ascii", "ignore").decode().strip()
-    stem, ext = os.path.splitext(ascii_name)
-    if not any(ch.isalpha() for ch in stem):  # e.g. an Arabic name: old browsers get "photo - 1.jpg"
-        ascii_name = "photo " + stem.strip() + ext if stem.strip() else "photo" + ext
+    stem, ext = os.path.splitext(filename)  # split BEFORE dropping non-ASCII ("محمد.jpg" -> ".jpg" is no stem)
+    ascii_stem = " ".join(stem.encode("ascii", "ignore").decode().split())
+    if not any(ch.isalpha() for ch in ascii_stem):  # e.g. an Arabic name: old browsers get "photo - 1.jpg"
+        ascii_stem = f"photo {ascii_stem}".strip()
+    ascii_name = ascii_stem + ext.encode("ascii", "ignore").decode()
     return f'attachment; filename="{ascii_name}"; filename*=UTF-8\'\'{quote(filename)}'
 
 
@@ -161,6 +163,12 @@ class GuestServer:
 
         def page(request: Request, template: str, status: int = 200, **ctx) -> HTMLResponse:
             ctx.setdefault("event_name", self.settings.event_name or "Photo booth")
+            color = self.settings.brand_color if branding.valid_color(self.settings.brand_color) else ""
+            ctx["brand_css"] = branding.css(color)  # built only from a checked #RRGGBB colour
+            ctx["theme_color"] = color or branding.DEFAULT_COLOR
+            logo = branding.logo_path()
+            ctx["logo_version"] = int(logo.stat().st_mtime) if logo.is_file() else 0
+            ctx["brand_message"] = self.settings.brand_message.strip()[:200]
             return templates.TemplateResponse(request, template, ctx, status_code=status, headers=no_store)
 
         def find(token: str) -> dict | None:
@@ -175,6 +183,13 @@ class GuestServer:
             if not 0 <= index < len(photos) or not os.path.isfile(photos[index]):
                 return None
             return session, photos[index], photos
+
+        @app.get("/brand/logo.png")
+        def logo():
+            path = branding.logo_path()
+            if not path.is_file():
+                return Response(status_code=404)
+            return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=300"})
 
         @app.get("/healthz", response_class=PlainTextResponse)
         def healthz():

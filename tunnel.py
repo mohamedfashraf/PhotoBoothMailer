@@ -100,6 +100,8 @@ class _KillWithApp:
 
 
 class Tunnel:
+    retry_delay = 5.0  # seconds before reconnecting; doubles while it keeps failing (max 60)
+
     def __init__(self, port: int, on_change: Callable[[str, str], None], token: str = "", hostname: str = ""):
         """on_change(state, detail) is called from a background thread.
 
@@ -156,7 +158,7 @@ class Tunnel:
                     pass
 
     def _run(self) -> None:
-        delay = 5
+        delay = self.retry_delay
         while not self._stop.is_set():
             exe = find_exe() or self._download()
             if exe is None:
@@ -168,7 +170,7 @@ class Tunnel:
             if self._stop.is_set():
                 return
             # It stopped (internet dropped, laptop slept...). Try again, waiting a bit longer each time.
-            delay = 5 if time.time() - started > 120 else min(delay * 2, 60)
+            delay = self.retry_delay if time.time() - started > 120 else min(delay * 2, 60)
             if self._stop.wait(delay):
                 return
 

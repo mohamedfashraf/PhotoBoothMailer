@@ -55,6 +55,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; 
   background: var(--accent); color: #fff;
 }
 .logo svg { width: 18px; height: 18px; }
+.logo-img { height: 40px; max-width: 120px; object-fit: contain; flex: none; border-radius: 8px; }
 .event { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .card {
@@ -145,3 +146,7 @@ input[type=search]:focus { border-color: var(--accent); box-shadow: 0 0 0 4px va
 .empty { margin-top: 18px; padding: 14px 16px; border-radius: 14px; background: var(--field); color: var(--muted); font-size: 15px; }
 .empty p { margin: 0 0 6px; } .empty p:last-child { margin: 0; }
 .empty strong { color: var(--text); }
+
+/* ---------- event branding ---------- */
+.message { margin: -6px 0 16px; padding: 12px 14px; border-radius: 14px; background: var(--accent-soft);
+           color: var(--accent-text); font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }

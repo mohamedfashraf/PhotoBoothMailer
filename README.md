@@ -43,6 +43,13 @@ The status column then shows what each guest did: *Ready*, *Opened, not saved ye
 *Photos saved*, or *New photos since they saved* (more photos arrived after they downloaded: show
 them their QR code again). The counter at the top shows how many guests saved their photos.
 
+- **Export list** saves the guest list as a spreadsheet (opens in Excel, Arabic names included): each
+  guest's photos, status, when they opened and saved their photos, and their link.
+- **New event** starts the next event: give it a name and a photos folder. The current guest list is
+  closed and its QR codes and links stop working (no photos are deleted). Always do this between
+  events, especially if the booth reuses the same folder: otherwise a returning name like "Hana"
+  would keep last event's link.
+
 ## QR codes: two ways
 
 Choose in the **QR screen** tab:
@@ -53,7 +60,9 @@ printed A4 sign next to the booth. Name search ignores capitals and small spelli
 (`mohamed` finds "Mohammed", `أحمد` finds "احمد"). At least 2 letters must be typed and at most 8
 matches are shown.
 
-> Anyone with the link can search any name. If that's a concern, use per-guest QR codes instead.
+> Anyone with the link can search any name. Turn off **Guests can find their photos by typing their
+> name** (QR screen tab) after the event, or use per-guest QR codes instead. Personal QR codes and
+> links keep working when search is off.
 
 **A QR per guest.** The QR screen shows a code for the newest guest as soon as their photos are
 ready, so nobody has to type their name. Double-clicking a guest in the Guests list also switches to
@@ -67,6 +76,12 @@ Open it from the **QR screen** tab (or double-click a guest). It opens as a smal
   back, new guests don't interrupt; press **Newest guest** to continue.
 - **Full screen** (or **F11**): drag the window to a second screen or tablet facing guests first.
   In full screen the buttons hide; move the mouse to show them. **Esc** leaves full screen.
+
+## Your event's look
+
+**Settings → Guest page look**: pick a colour (7 choices), add a logo (e.g. the couple's monogram; a
+PNG with a transparent background looks best) and a short message such as "Thank you for celebrating
+with us!". Guests see them on their phone, and the logo also appears on the QR screen.
 
 ## How guests save their photos
 
@@ -155,6 +170,17 @@ python dev/make_test_photos.py --clean   # start test_photos\ from scratch
 
 Then choose the `test_photos` folder in the app.
 
+### Tests
+
+```powershell
+pip install -r requirements-dev.txt   # once
+python -m pytest                      # about 30 seconds, no internet needed
+```
+
+They cover photo grouping, name search, the guest page (downloads, ZIP, search on/off, branding),
+new events, the online link (with a stand-in for cloudflared) and the folder speed-up.
+`dev/release.py` runs them before every release.
+
 Settings are saved in `settings.json` next to the app, guests and link codes in `photobooth.db`.
 
 ## Building the .exe
@@ -197,7 +223,7 @@ To publish a new version:
 
 **At the venue**
 
-- [ ] Laptop plugged in, sleep turned off (Settings → System → Power → Screen and sleep: Never).
+- [ ] Laptop plugged in. (While the app is open, Windows won't sleep or turn the screen off.)
 - [ ] Laptop has internet (for the online link). No internet? Switch to **Same Wi-Fi only** and turn
       on the laptop's Mobile Hotspot.
 - [ ] Open the app. **QR screen** tab → green "Online" status.
@@ -210,3 +236,9 @@ To publish a new version:
 - [ ] Keep the app open: guests can only open their photos while it runs.
 - [ ] Glance at **Guests** now and then: *Opened, not saved yet* may mean a guest needs help saving.
 - [ ] Two guests with the same name? Ask the booth operator to add a surname or a number.
+
+**After**
+
+- [ ] Turn off name search (QR screen tab) once guests have left.
+- [ ] **Export list** if you want a record of who got their photos.
+- [ ] Next event: press **New event** first.
