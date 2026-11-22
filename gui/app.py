@@ -325,36 +325,36 @@ class App(ctk.CTk):
         parent.grid_columnconfigure(1, weight=1)
         parent.grid_rowconfigure(0, weight=1)
 
-        sidebar = ctk.CTkFrame(parent, fg_color=theme.SIDEBAR, corner_radius=0, width=232)
+        sidebar = ctk.CTkFrame(parent, fg_color=theme.SIDEBAR, corner_radius=0, width=204)
         sidebar.grid(row=0, column=0, sticky="nsw")
         sidebar.grid_propagate(False)
         sidebar.grid_columnconfigure(0, weight=1)
         sidebar.grid_rowconfigure(len(NAV) + 1, weight=1)
 
         brand = ctk.CTkFrame(sidebar, fg_color="transparent")
-        brand.grid(row=0, column=0, sticky="ew", padx=20, pady=(24, 26))
-        icon_tile(brand, "camera", size=36, fg=theme.ACCENT, color=icons.WHITE).grid(row=0, column=0, rowspan=2)
+        brand.grid(row=0, column=0, sticky="ew", padx=16, pady=(18, 18))
+        icon_tile(brand, "camera", size=32, fg=theme.ACCENT, color=icons.WHITE).grid(row=0, column=0, rowspan=2)
         ctk.CTkLabel(brand, text="PhotoBooth", font=theme.font(15, "bold"), text_color=theme.TEXT,
                      anchor="w", height=18).grid(row=0, column=1, sticky="sw", padx=(12, 0))
         ctk.CTkLabel(brand, text=f"Photo sharing · v{APP_VERSION}", font=theme.font(12), text_color=theme.MUTED,
                      anchor="w", height=16).grid(row=1, column=1, sticky="nw", padx=(12, 0))
 
         for i, (key, label, icon_name) in enumerate(NAV, start=1):
-            button = ctk.CTkButton(sidebar, text=f"  {label}", anchor="w", height=42, corner_radius=10,
-                                   font=theme.font(14, "bold"), fg_color="transparent",
+            button = ctk.CTkButton(sidebar, text=f"  {label}", anchor="w", height=38, corner_radius=9,
+                                   font=theme.font(13, "bold"), fg_color="transparent",
                                    hover_color=theme.SOFT, text_color=theme.TEXT, compound="left",
                                    image=icon(icon_name, 18, theme.MUTED),
                                    command=lambda k=key: self.select(k))
-            button.grid(row=i, column=0, sticky="ew", padx=12, pady=2)
+            button.grid(row=i, column=0, sticky="ew", padx=10, pady=1)
             self.nav_buttons[key] = button
 
         event_box = ctk.CTkFrame(sidebar, fg_color=theme.FIELD, corner_radius=14)
-        event_box.grid(row=len(NAV) + 2, column=0, sticky="ew", padx=12, pady=14)
+        event_box.grid(row=len(NAV) + 2, column=0, sticky="ew", padx=10, pady=10)
         event_box.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(event_box, text="CURRENT EVENT", font=theme.font(10, "bold"),
                      text_color=theme.MUTED, anchor="w", height=14).grid(row=0, column=0, sticky="ew",
                                                                           padx=14, pady=(12, 2))
-        self.event_label = WrapLabel(event_box, "", size=14, weight="bold", color=theme.TEXT, wraplength=180)
+        self.event_label = WrapLabel(event_box, "", size=14, weight="bold", color=theme.TEXT, wraplength=160)
         self.event_label.grid(row=1, column=0, sticky="ew", padx=14)
         self.folder_label = ctk.CTkLabel(event_box, text="", font=theme.font(12), anchor="w", compound="left",
                                          height=18)
@@ -420,14 +420,14 @@ class EmptyState(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=32, pady=(28, 14))
+        header.grid(row=0, column=0, sticky="ew", padx=24, pady=(18, 10))
         header.grid_columnconfigure(0, weight=1)
         title_label(header, title).grid(row=0, column=0, sticky="w")
         if subtitle:
             WrapLabel(header, subtitle, size=14).grid(row=1, column=0, sticky="ew", pady=(2, 0))
 
         card = Card(self)
-        card.grid(row=1, column=0, sticky="nsew", padx=32, pady=(0, 32))
+        card.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 20))
         inner = ctk.CTkFrame(card.body, fg_color="transparent")
         inner.place(relx=0.5, rely=0.46, anchor="center")
         icon_tile(inner, icon_name, size=72, icon_size=34).pack()

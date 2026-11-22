@@ -30,56 +30,57 @@ class SettingsView(ctk.CTkFrame):
 
         # Header
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=36, pady=(30, 12))
+        header.grid(row=0, column=0, sticky="ew", padx=24, pady=(18, 10))
         header.grid_columnconfigure(0, weight=1)
         title_label(header, "Settings").grid(row=0, column=0, sticky="w")
-        WrapLabel(header, "Change anything here at any time. Press Save when you're done.", size=14).grid(
+        WrapLabel(header, "Change anything, then press Save.", size=13).grid(
             row=1, column=0, sticky="ew", pady=(2, 0))
-        secondary_button(header, "Run setup guide again", on_run_setup, icon_name="rotate-ccw", width=210).grid(
+        secondary_button(header, "Setup guide", on_run_setup, icon_name="rotate-ccw", width=180).grid(
             row=0, column=1, rowspan=2, sticky="e")
 
         # Scrollable content
         scroll = ctk.CTkScrollableFrame(self, fg_color="transparent", scrollbar_button_color=theme.SOFT_HOVER)
-        scroll.grid(row=1, column=0, sticky="nsew", padx=(24, 12))
+        scroll.grid(row=1, column=0, sticky="nsew", padx=(14, 6))
         scroll.grid_columnconfigure(0, weight=1)
 
         folder_card = Card(scroll, "Photos folder", "The folder where the photo booth saves each guest's photos.", icon_name="folder")
-        folder_card.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 16))
+        folder_card.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 12))
         self.folder = FolderPicker(folder_card.body)
         self.folder.grid(row=0, column=0, sticky="ew")
 
         event_card = Card(scroll, "Event", "The name guests see on their phone.", icon_name="party-popper")
-        event_card.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 16))
+        event_card.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
         self.event = EventFields(event_card.body)
         self.event.grid(row=0, column=0, sticky="ew")
 
         brand_card = Card(scroll, "Guest page look", "Your event's colour, logo and a short message, shown on "
                                                      "guests' phones.", icon_name="sparkles")
-        brand_card.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 16))
+        brand_card.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 12))
         self._build_branding(brand_card.body)
 
         adv_card = Card(scroll, "More options", icon_name="settings")
-        adv_card.grid(row=3, column=0, sticky="ew", padx=12, pady=(0, 16))
+        adv_card.grid(row=3, column=0, sticky="ew", padx=12, pady=(0, 12))
         adv_card.body.grid_columnconfigure((0, 1), weight=1, uniform="adv")
         self.port = Field(adv_card.body, "Guest page port", placeholder="8000",
-                          hint="Leave this at 8000 unless another program already uses it.")
+                          hint="Only change it if another program already uses this number.")
         self.port.grid(row=0, column=0, sticky="new", padx=(0, 12))
-        look = ctk.CTkFrame(adv_card.body, fg_color="transparent")
+        look = ctk.CTkFrame(adv_card.body, fg_color="transparent")  # lines up with the port box
         look.grid(row=0, column=1, sticky="new", padx=(12, 0))
-        ctk.CTkLabel(look, text="Look", font=theme.font(13, "bold"), text_color=theme.TEXT).pack(anchor="w")
+        ctk.CTkLabel(look, text="Look", font=theme.font(13, "bold"), text_color=theme.TEXT, height=20).pack(anchor="w")
         self.appearance = ctk.CTkSegmentedButton(
-            look, values=list(APPEARANCE), command=self._on_appearance, height=42, font=theme.font(13, "bold"),
+            look, values=list(APPEARANCE), command=self._on_appearance, height=36, font=theme.font(13, "bold"),
+            text_color=theme.TEXT,
             selected_color=theme.ACCENT, selected_hover_color=theme.ACCENT_HOVER,
             unselected_color=theme.SOFT, unselected_hover_color=theme.SOFT_HOVER, fg_color=theme.SOFT)
         self.appearance.pack(anchor="w", pady=(6, 0))
 
         # Footer
-        footer = ctk.CTkFrame(self, fg_color=theme.SIDEBAR, corner_radius=0, height=72, border_width=0)
+        footer = ctk.CTkFrame(self, fg_color=theme.SIDEBAR, corner_radius=0, height=56, border_width=0)
         footer.grid(row=2, column=0, sticky="ew")
         footer.grid_columnconfigure(0, weight=1)
         self.status = StatusLine(footer)
-        self.status.grid(row=0, column=0, sticky="ew", padx=36, pady=16)
-        primary_button(footer, "Save changes", self.save, icon_name="save", width=176).grid(row=0, column=1, padx=36, pady=16)
+        self.status.grid(row=0, column=0, sticky="ew", padx=24, pady=10)
+        primary_button(footer, "Save changes", self.save, icon_name="save", width=160).grid(row=0, column=1, padx=24, pady=10)
 
         self.load()
 
@@ -93,7 +94,7 @@ class SettingsView(ctk.CTkFrame):
         self._color = ""
         self.swatches: dict[str, ctk.CTkButton] = {}
         for name, color in branding.PRESETS.items():
-            button = ctk.CTkButton(swatches, text="", width=34, height=34, corner_radius=17, fg_color=color,
+            button = ctk.CTkButton(swatches, text="", width=30, height=30, corner_radius=15, fg_color=color,
                                    hover_color=color, border_width=3, border_color=theme.CARD,
                                    command=lambda c=color: self._pick_color(c))
             button.pack(side="left", padx=(0, 8))
@@ -105,10 +106,10 @@ class SettingsView(ctk.CTkFrame):
                      anchor="w").grid(row=2, column=0, sticky="w", pady=(16, 0))
         logo_row = ctk.CTkFrame(body, fg_color="transparent")
         logo_row.grid(row=3, column=0, sticky="w", pady=(6, 0))
-        self.logo_preview = ctk.CTkLabel(logo_row, text="No logo", width=64, height=64, corner_radius=12,
+        self.logo_preview = ctk.CTkLabel(logo_row, text="No logo", width=56, height=56, corner_radius=12,
                                          fg_color=theme.FIELD, text_color=theme.MUTED, font=theme.font(11))
         self.logo_preview.pack(side="left")
-        secondary_button(logo_row, "Choose image", self._choose_logo, icon_name="image", width=160).pack(
+        secondary_button(logo_row, "Choose image", self._choose_logo, icon_name="image", width=150).pack(
             side="left", padx=(12, 0))
         self.logo_remove = secondary_button(logo_row, "Remove", self._remove_logo, width=100)
         self.logo_remove.pack(side="left", padx=(8, 0))
@@ -132,7 +133,7 @@ class SettingsView(ctk.CTkFrame):
             with Image.open(branding.logo_path()) as img:
                 img.load()
                 w, h = img.size
-                scale = 56 / max(w, h)
+                scale = 48 / max(w, h)
                 image = ctk.CTkImage(light_image=img.copy(), size=(max(1, int(w * scale)), max(1, int(h * scale))))
             self.logo_preview.configure(image=image, text="")
             self.logo_remove.configure(state="normal")

@@ -36,7 +36,7 @@ class WrapLabel(ctk.CTkLabel):
             self.configure(wraplength=width)
 
 
-def title_label(master, text: str, size: int = 26) -> ctk.CTkLabel:
+def title_label(master, text: str, size: int = 22) -> ctk.CTkLabel:
     return ctk.CTkLabel(master, text=text, font=theme.font(size, "bold"), text_color=theme.TEXT, anchor="w")
 
 
@@ -83,19 +83,19 @@ class Card(ctk.CTkFrame):
         has_header = bool(title)
         if title:
             header = ctk.CTkFrame(self, fg_color="transparent")
-            header.grid(row=0, column=0, sticky="ew", padx=24, pady=(20, 0))
+            header.grid(row=0, column=0, sticky="ew", padx=20, pady=(16, 0))
             header.grid_columnconfigure(1, weight=1)
             col = 0
             if icon_name:
-                icon_tile(header, icon_name, size=34).grid(row=0, column=0, rowspan=2, sticky="n",
+                icon_tile(header, icon_name, size=30).grid(row=0, column=0, rowspan=2, sticky="n",
                                                             padx=(0, 14))
                 col = 1
-            ctk.CTkLabel(header, text=title, font=theme.font(16, "bold"), text_color=theme.TEXT,
+            ctk.CTkLabel(header, text=title, font=theme.font(15, "bold"), text_color=theme.TEXT,
                          anchor="w", height=20).grid(row=0, column=col, sticky="ew")
             if subtitle:
                 WrapLabel(header, subtitle, height=18).grid(row=1, column=col, sticky="ew", pady=(1, 0))
         self.body = ctk.CTkFrame(self, fg_color="transparent")
-        self.body.grid(row=1, column=0, sticky="nsew", padx=24, pady=(18 if has_header else 20, 22))
+        self.body.grid(row=1, column=0, sticky="nsew", padx=20, pady=(12 if has_header else 16, 18))
         self.body.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
@@ -110,22 +110,22 @@ def _with_icon(kw: dict, icon_name: str | None, color, side: str, size: int = 16
 
 def primary_button(master, text: str, command: Callable | None = None, icon_name: str | None = None,
                    icon_side: str = "left", **kw) -> ctk.CTkButton:
-    kw.setdefault("height", 42)
+    kw.setdefault("height", 36)
     _with_icon(kw, icon_name, WHITE, icon_side)
     return ctk.CTkButton(master, text=text, command=command, fg_color=theme.ACCENT,
                          hover_color=theme.ACCENT_HOVER, text_color="#FFFFFF",
-                         text_color_disabled=("#E4E4FF", "#C9C9F5"), corner_radius=10,
-                         font=theme.font(14, "bold"), **kw)
+                         text_color_disabled=("#E4E4FF", "#C9C9F5"), corner_radius=9,
+                         font=theme.font(13, "bold"), **kw)
 
 
 def secondary_button(master, text: str, command: Callable | None = None, icon_name: str | None = None,
                      icon_side: str = "left", **kw) -> ctk.CTkButton:
-    kw.setdefault("height", 42)
+    kw.setdefault("height", 36)
     _with_icon(kw, icon_name, theme.TEXT, icon_side)
     return ctk.CTkButton(master, text=text, command=command, fg_color=theme.SOFT,
                          hover_color=theme.SOFT_HOVER, text_color=theme.TEXT,
-                         text_color_disabled=theme.MUTED, corner_radius=10,
-                         font=theme.font(14, "bold"), **kw)
+                         text_color_disabled=theme.MUTED, corner_radius=9,
+                         font=theme.font(13, "bold"), **kw)
 
 
 def link_button(master, text: str, url: str, **kw) -> ctk.CTkButton:
@@ -151,7 +151,7 @@ class Field(ctk.CTkFrame):
                                   anchor="w", height=20)
         self.label.grid(row=0, column=0, columnspan=2, sticky="w")
 
-        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=42, corner_radius=10,
+        self.entry = ctk.CTkEntry(self, placeholder_text=placeholder, height=36, corner_radius=9,
                                   border_width=1, border_color=theme.BORDER, fg_color=theme.FIELD,
                                   text_color=theme.TEXT, placeholder_text_color=theme.MUTED,
                                   font=theme.font(14), show="•" if secret else "")
@@ -159,7 +159,7 @@ class Field(ctk.CTkFrame):
         self.entry.bind("<KeyRelease>", self._changed)
 
         if secret:
-            self.eye = ctk.CTkButton(self, text="", image=icon("eye", 18, theme.MUTED), width=42, height=42,
+            self.eye = ctk.CTkButton(self, text="", image=icon("eye", 17, theme.MUTED), width=36, height=36,
                                      corner_radius=10, fg_color=theme.SOFT, hover_color=theme.SOFT_HOVER,
                                      command=self._toggle_secret)
             self.eye.grid(row=1, column=1, padx=(8, 0), pady=(6, 0))
@@ -186,6 +186,8 @@ class Field(ctk.CTkFrame):
         self.entry.delete(0, "end")
         if value not in (None, ""):
             self.entry.insert(0, str(value))
+        elif self.focus_get() is not self.entry and hasattr(self.entry, "_activate_placeholder"):
+            self.entry._activate_placeholder()  # show the grey example text again in an empty box
 
     def focus(self) -> None:
         self.entry.focus_set()

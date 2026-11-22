@@ -30,6 +30,41 @@ def apply() -> None:
 
     CTkScrollbar._draw = _draw_without_forced_update
 
+    # Scroll areas: hide the scrollbar while everything fits (a bar with nothing to scroll looks broken).
+    from customtkinter import CTkScrollableFrame
+    original_init = CTkScrollableFrame.__init__
+
+    def _init_with_autohide(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        _autohide(self)
+
+    CTkScrollableFrame.__init__ = _init_with_autohide
+
 
 def _noop() -> None:
     return None
+
+
+def _autohide(frame) -> None:
+    canvas, bar = frame._parent_canvas, frame._scrollbar
+    pending = []
+
+    def update():
+        pending.clear()
+        try:
+            box = canvas.bbox("all")
+            needed = box is not None and (box[3] - box[1]) > canvas.winfo_height() + 2
+            if needed and not bar.winfo_manager():
+                bar.grid()
+            elif not needed and bar.winfo_manager():
+                bar.grid_remove()
+                canvas.yview_moveto(0)
+        except Exception:  # the window is closing
+            pass
+
+    def schedule(_event=None):
+        if not pending:
+            pending.append(frame.after(30, update))
+
+    frame.bind("<Configure>", schedule, add="+")
+    canvas.bind("<Configure>", schedule, add="+")

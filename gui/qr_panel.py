@@ -61,7 +61,7 @@ BANNER = {
 
 def _segmented(master, values, command) -> ctk.CTkSegmentedButton:
     return ctk.CTkSegmentedButton(
-        master, values=values, command=command, height=36, font=theme.font(13, "bold"),
+        master, values=values, command=command, height=32, font=theme.font(13, "bold"),
         selected_color=theme.ACCENT, selected_hover_color=theme.ACCENT_HOVER, fg_color=theme.SOFT,
         unselected_color=theme.SOFT, unselected_hover_color=theme.SOFT_HOVER, text_color=theme.TEXT)
 
@@ -93,35 +93,35 @@ class QRPanel(ctk.CTkFrame):
 
         # ---- header: title + the main action
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=32, pady=(28, 14))
+        header.grid(row=0, column=0, sticky="ew", padx=24, pady=(18, 10))
         header.grid_columnconfigure(0, weight=1)
         title_label(header, "QR screen").grid(row=0, column=0, sticky="w")
-        WrapLabel(header, "The code your guests scan, and how their phones reach the photos.", size=14).grid(
+        WrapLabel(header, "What guests scan, and how their phones reach the photos.", size=13).grid(
             row=1, column=0, sticky="ew", pady=(2, 0))
-        primary_button(header, "Open QR screen", open_qr, icon_name="qr-code", width=190).grid(
+        primary_button(header, "Open QR screen", open_qr, icon_name="qr-code", width=170).grid(
             row=0, column=1, rowspan=2, sticky="e", padx=(16, 0))
 
         body = ctk.CTkScrollableFrame(self, fg_color="transparent", scrollbar_button_color=theme.SOFT_HOVER)
-        body.grid(row=1, column=0, sticky="nsew", padx=(20, 8))
+        body.grid(row=1, column=0, sticky="nsew", padx=(12, 6))
         body.grid_columnconfigure(0, weight=1)
 
         # ---- status banner
         banner = ctk.CTkFrame(body, fg_color=theme.CARD, corner_radius=16, border_width=1, border_color=theme.BORDER)
-        banner.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 16))
+        banner.grid(row=0, column=0, sticky="ew", padx=12, pady=(0, 12))
         banner.grid_columnconfigure(1, weight=1)
-        self.banner_icon = ctk.CTkLabel(banner, text="", width=44, height=44, corner_radius=13)
-        self.banner_icon.grid(row=0, column=0, rowspan=2, padx=(20, 14), pady=18)
+        self.banner_icon = ctk.CTkLabel(banner, text="", width=38, height=38, corner_radius=11)
+        self.banner_icon.grid(row=0, column=0, rowspan=2, padx=(16, 12), pady=12)
         self.banner_title = ctk.CTkLabel(banner, text="", font=theme.font(15, "bold"), text_color=theme.TEXT,
                                          anchor="w", height=20)
-        self.banner_title.grid(row=0, column=1, sticky="sew", pady=(18, 0))
+        self.banner_title.grid(row=0, column=1, sticky="sew", pady=(12, 0))
         self.banner_text = WrapLabel(banner, "", size=13)
-        self.banner_text.grid(row=1, column=1, sticky="new", pady=(2, 18))
+        self.banner_text.grid(row=1, column=1, sticky="new", pady=(1, 12))
         self.progress = ctk.CTkProgressBar(banner, height=4, corner_radius=2, progress_color=theme.ACCENT,
                                            fg_color=theme.SOFT, mode="indeterminate")
-        self.progress.grid(row=2, column=0, columnspan=3, sticky="ew", padx=20, pady=(0, 16))
+        self.progress.grid(row=2, column=0, columnspan=3, sticky="ew", padx=16, pady=(0, 12))
         self.progress.grid_remove()
         actions = ctk.CTkFrame(banner, fg_color="transparent")
-        actions.grid(row=0, column=2, rowspan=2, padx=(12, 20))
+        actions.grid(row=0, column=2, rowspan=2, padx=(12, 16))
         secondary_button(actions, "Test", self._open_test_page, icon_name="external-link", height=36,
                          width=96).pack(side="left")
         ctk.CTkButton(actions, text="", image=icon("rotate-ccw", 16, theme.MUTED), width=36, height=36,
@@ -130,7 +130,7 @@ class QRPanel(ctk.CTkFrame):
 
         # ---- what guests scan
         scan = Card(body, "What guests scan", icon_name="scan-qr-code")
-        scan.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 16))
+        scan.grid(row=1, column=0, sticky="ew", padx=12, pady=(0, 12))
         self.mode = _segmented(scan.body, list(MODES.values()), self._on_mode)
         self.mode.grid(row=0, column=0, sticky="w")
         self.mode_text = WrapLabel(scan.body, "", size=13)
@@ -157,7 +157,7 @@ class QRPanel(ctk.CTkFrame):
 
         # ---- how phones connect
         net = Card(body, "How phones connect", icon_name="globe")
-        net.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 24))
+        net.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 16))
         self.connection = _segmented(net.body, list(CONNECTIONS.values()), self._on_connection)
         self.connection.grid(row=0, column=0, sticky="w")
         self.connection_text = WrapLabel(net.body, "", size=13)

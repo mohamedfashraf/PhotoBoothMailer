@@ -3,6 +3,15 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.1.2 (2026-11-22)
+
+- More compact everywhere: smaller margins, buttons, boxes and table rows, a narrower sidebar and
+  shorter texts, so more fits on a laptop screen.
+- Scrollbars only appear when there is something to scroll.
+- Fixed: "Light" and "Dark" in Settings → Look were almost invisible; the example text in empty
+  boxes didn't show; "Look" wasn't lined up with the port box; the port hint always said 8000.
+- Setup guide: removed a repeated sentence on the event step and a stray dot on the progress bar.
+
 ## 1.1.1 (2026-11-22)
 
 - Cleaner QR screen tab: a status banner at the top shows at a glance whether guests can connect

@@ -22,7 +22,7 @@ class FolderPicker(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
 
         self.pill = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=10, border_width=1,
-                                 border_color=theme.BORDER, height=44)
+                                 border_color=theme.BORDER, height=36)
         self.pill.grid(row=0, column=0, sticky="ew")
         self.pill.grid_propagate(False)
         self.pill.grid_columnconfigure(1, weight=1)
@@ -32,7 +32,7 @@ class FolderPicker(ctk.CTkFrame):
         self.path_label = ctk.CTkLabel(self.pill, text="", font=theme.font(14), anchor="w")
         self.path_label.grid(row=0, column=1, sticky="ew", padx=(0, 12))
 
-        primary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=160, height=44).grid(
+        primary_button(self, "Choose folder", self._choose, icon_name="folder-open", width=150, height=36).grid(
             row=0, column=1, padx=(10, 0))
 
         self.status = StatusLine(self)
@@ -89,13 +89,12 @@ class EventFields(ctk.CTkFrame):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
         self.name = Field(self, "Event name", placeholder="e.g. Sara & Omar's Wedding",
-                          hint="Shown to guests at the top of their photos page.",
                           on_change=self._update_preview)
         self.name.grid(row=0, column=0, sticky="ew")
 
         ctk.CTkLabel(self, text="PREVIEW: THE TOP OF YOUR GUEST'S PHOTOS PAGE", font=theme.font(11, "bold"),
                      text_color=theme.MUTED, anchor="w", height=16).grid(row=1, column=0, sticky="ew",
-                                                                          pady=(18, 6))
+                                                                          pady=(14, 6))
         preview = ctk.CTkFrame(self, fg_color=theme.FIELD, corner_radius=12, border_width=1,
                                border_color=theme.BORDER)
         preview.grid(row=2, column=0, sticky="ew")

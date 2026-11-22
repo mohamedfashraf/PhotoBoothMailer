@@ -43,11 +43,11 @@ class GuestsView(ctk.CTkFrame):
 
         # Header with live counters
         header = ctk.CTkFrame(self, fg_color="transparent")
-        header.grid(row=0, column=0, sticky="ew", padx=32, pady=(28, 14))
+        header.grid(row=0, column=0, sticky="ew", padx=24, pady=(18, 10))
         header.grid_columnconfigure(0, weight=1)
         title_label(header, "Guests").grid(row=0, column=0, sticky="w")
-        WrapLabel(header, "New guests appear here automatically. Double-click a guest to show their QR code.",
-                  size=14).grid(row=1, column=0, sticky="ew", pady=(2, 0))
+        WrapLabel(header, "Double-click a guest to show their QR code.",
+                  size=13).grid(row=1, column=0, sticky="ew", pady=(2, 0))
         chips = ctk.CTkFrame(header, fg_color="transparent")
         chips.grid(row=0, column=1, rowspan=2, sticky="e")
         self.guest_chip = self._chip(chips, "users")
@@ -55,19 +55,19 @@ class GuestsView(ctk.CTkFrame):
         self.sent_chip = self._chip(chips, "circle-check", color=theme.SUCCESS)
 
         actions = ctk.CTkFrame(header, fg_color="transparent")
-        actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(12, 0))
+        actions.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(10, 0))
         actions.grid_columnconfigure(2, weight=1)
-        secondary_button(actions, "New event", self.on_new_event, icon_name="party-popper", height=34,
-                         width=140).grid(row=0, column=0)
-        secondary_button(actions, "Export list", self._export, icon_name="save", height=34,
-                         width=140).grid(row=0, column=1, padx=(8, 0))
+        secondary_button(actions, "New event", self.on_new_event, icon_name="party-popper", height=32,
+                         width=128).grid(row=0, column=0)
+        secondary_button(actions, "Export list", self._export, icon_name="save", height=32,
+                         width=128).grid(row=0, column=1, padx=(8, 0))
         self.export_status = StatusLine(actions)
         self.export_status.grid(row=0, column=2, sticky="ew", padx=(14, 0))
 
         # Body: the table and an empty state, stacked; we raise whichever applies.
         body = Card(self)
-        body.grid(row=1, column=0, sticky="nsew", padx=32, pady=(0, 32))
-        body.body.grid_configure(padx=8, pady=8)
+        body.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 20))
+        body.body.grid_configure(padx=6, pady=6)
         body.body.grid_rowconfigure(0, weight=1)
 
         self.table_page = ctk.CTkFrame(body.body, fg_color=theme.CARD, corner_radius=0)
@@ -82,7 +82,14 @@ class GuestsView(ctk.CTkFrame):
         self.tree.grid(row=0, column=0, sticky="nsew", padx=(8, 0), pady=4)
         scrollbar = ctk.CTkScrollbar(self.table_page, command=self.tree.yview, button_color=theme.SOFT_HOVER)
         scrollbar.grid(row=0, column=1, sticky="ns", padx=4, pady=4)
-        self.tree.configure(yscrollcommand=scrollbar.set)
+        def scrolled(first, last, bar=scrollbar):
+            bar.set(first, last)
+            if float(first) <= 0.0 and float(last) >= 1.0:  # everything fits: no scrollbar
+                bar.grid_remove()
+            elif not bar.winfo_manager():
+                bar.grid()
+
+        self.tree.configure(yscrollcommand=scrolled)
         self.tree.bind("<Double-1>", self._on_double_click)
         self.tree.bind("<Return>", self._on_double_click)
 
@@ -101,10 +108,10 @@ class GuestsView(ctk.CTkFrame):
         self.reload()
 
     def _chip(self, master, icon_name: str, color=theme.MUTED) -> ctk.CTkLabel:
-        chip = ctk.CTkLabel(master, text="", image=icon(icon_name, 15, color), compound="left",
-                            font=theme.font(13, "bold"), text_color=theme.TEXT, fg_color=theme.CARD,
-                            corner_radius=10, height=34, padx=12)
-        chip.pack(side="left", padx=(8, 0))
+        chip = ctk.CTkLabel(master, text="", image=icon(icon_name, 14, color), compound="left",
+                            font=theme.font(12, "bold"), text_color=theme.TEXT, fg_color=theme.CARD,
+                            corner_radius=9, height=30, padx=10)
+        chip.pack(side="left", padx=(6, 0))
         return chip
 
     def _on_double_click(self, _event=None) -> None:
@@ -124,11 +131,11 @@ class GuestsView(ctk.CTkFrame):
         bg, fg = theme.CARD[i], theme.TEXT[i]
         style.layout("Guests.Treeview", [("Guests.Treeview.treearea", {"sticky": "nswe"})])
         style.configure("Guests.Treeview", background=bg, fieldbackground=bg, foreground=fg, borderwidth=0,
-                        rowheight=int(46 * scale), font=(theme.FAMILY, 12))
+                        rowheight=int(36 * scale), font=(theme.FAMILY, 11))
         style.map("Guests.Treeview", background=[("selected", theme.ACCENT_SOFT[i])],
                   foreground=[("selected", theme.ACCENT_TEXT[i])])
         style.configure("Guests.Treeview.Heading", background=bg, foreground=theme.MUTED[i], borderwidth=0,
-                        relief="flat", font=(theme.FAMILY, 9, "bold"), padding=(int(4 * scale), int(10 * scale)))
+                        relief="flat", font=(theme.FAMILY, 9, "bold"), padding=(int(4 * scale), int(8 * scale)))
         style.map("Guests.Treeview.Heading", background=[("active", bg)], relief=[("active", "flat")])
         self.tree.tag_configure("ready", foreground=fg)  # calm: only rows that need attention get colour
         self.tree.tag_configure("sending", foreground=theme.ACCENT_TEXT[i])

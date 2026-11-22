@@ -89,7 +89,7 @@ class SetupWizard(ctk.CTkFrame):
     def _build_page(self, name: str, fill: Callable, scroll: bool = False) -> None:
         # An opaque holder per page, all in the same grid cell, inset so the card's rounded corners show.
         holder = ctk.CTkFrame(self.card, fg_color=theme.CARD, corner_radius=0)
-        holder.grid(row=0, column=0, sticky="nsew", padx=20, pady=(22, 16))
+        holder.grid(row=0, column=0, sticky="nsew", padx=16, pady=(16, 12))
         holder.grid_columnconfigure(0, weight=1)
         holder.grid_rowconfigure(0, weight=1)
         if scroll:
@@ -104,12 +104,12 @@ class SetupWizard(ctk.CTkFrame):
 
     def _heading(self, page, icon_name: str, title: str, text: str, success: bool = False) -> None:
         if success:
-            icon_tile(page, icon_name, size=52, fg=theme.SUCCESS_SOFT, color=theme.SUCCESS).grid(
+            icon_tile(page, icon_name, size=44, fg=theme.SUCCESS_SOFT, color=theme.SUCCESS).grid(
                 row=0, column=0, sticky="w")
         else:
-            icon_tile(page, icon_name, size=52).grid(row=0, column=0, sticky="w")
-        title_label(page, title, size=24).grid(row=1, column=0, sticky="w", pady=(14, 0))
-        WrapLabel(page, text, size=14, wraplength=640).grid(row=2, column=0, sticky="ew", pady=(4, 20))
+            icon_tile(page, icon_name, size=44).grid(row=0, column=0, sticky="w")
+        title_label(page, title, size=22).grid(row=1, column=0, sticky="w", pady=(10, 0))
+        WrapLabel(page, text, size=13, wraplength=640).grid(row=2, column=0, sticky="ew", pady=(2, 14))
 
     def _fill_welcome(self, page) -> None:
         self._heading(page, "sparkles", f"Welcome to {config.APP_NAME}",
@@ -185,6 +185,8 @@ class SetupWizard(ctk.CTkFrame):
         else:
             self.step_label.configure(text="")
             self.progress.set(0 if step == "welcome" else 1)
+        # At 0% the bar still draws a small dot of colour: hide the fill until there's progress.
+        self.progress.configure(progress_color=theme.SOFT if step == "welcome" else theme.ACCENT)
         self.next_button.configure(text={"welcome": "Let's start", "event": "Finish setup",
                                          "done": "Open the app"}.get(step, "Continue"))
         if step == "event":
