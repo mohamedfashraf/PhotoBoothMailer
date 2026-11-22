@@ -1,0 +1,44 @@
+# --- Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Build output (made by build.bat)
+build/
+dist/
+*.spec
+# cloudflared.exe downloaded for the build
+vendor/
+
+# --- Created when the app runs (private to each laptop / event)
+settings.json
+settings.json.tmp
+settings.broken.json
+*.db
+*.db-wal
+*.db-shm
+.write_test
+# cloudflared.exe the app downloads for the online link
+tools/
+cloudflared.exe
+
+# --- Guest photos: never commit real or test pictures
+test_photos/
+*.jpg
+*.jpeg
+*.png
+# ...but keep the app's own icon
+!assets/**/*.png
+
+# --- Editors and Windows
+.vscode/
+.idea/
+*.log
+Thumbs.db
+Desktop.ini
+.DS_Store

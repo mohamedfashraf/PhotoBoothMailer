@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Your photos · {{ event_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <p class="eyebrow">Your photos are ready</p>
+  <h1 dir="auto">Hi, {{ name }}!</h1>
+  <p class="lead">
+    {% if count == 1 %}Here's your photo from the booth.{% else %}Here are your {{ count }} photos from the booth.{% endif %}
+    Save {% if count == 1 %}it{% else %}them{% endif %} to your phone before you go.
+  </p>
+
+  <a id="save-all" class="button" href="/z/{{ token }}.zip" download>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+    <span class="label">{% if count == 1 %}Save my photo{% else %}Save all {{ count }} photos{% endif %}</span>
+  </a>
+  <p id="save-status" class="save-status" role="status" hidden></p>
+
+  <div class="gallery count-{{ count if count < 3 else 'many' }}">
+    {% for p in photos %}
+      <figure class="shot">
+        <a href="/p/{{ token }}/{{ p.index }}?v={{ stamp }}" target="_blank" rel="noopener" class="shot-img">
+          <img src="/t/{{ token }}/{{ p.index }}.jpg?v={{ stamp }}" alt="Photo {{ p.index + 1 }}" loading="lazy">
+        </a>
+        <a class="shot-save" href="/p/{{ token }}/{{ p.index }}?dl=1&v={{ stamp }}" download="{{ p.name }}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+          {% if count == 1 %}Download{% else %}Photo {{ p.index + 1 }}{% endif %}
+        </a>
+      </figure>
+    {% endfor %}
+  </div>
+
+  <p class="tip">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+    <span>Tip: tap a photo to open it full size, then press and hold it to save it to your photos.</span>
+  </p>
+  {% if count > 1 %}
+    <p class="fine"><a href="/z/{{ token }}.zip" download>Download all as one ZIP file</a> (best on a computer)</p>
+  {% endif %}
+</section>
+<script>
+(function () {
+  var token = {{ token|tojson }};
+  var photos = {{ photos|tojson }};
+  var stamp = {{ stamp|tojson }};
+  var button = document.getElementById("save-all");
+  var label = button.querySelector(".label");
+  var status = document.getElementById("save-status");
+  var original = label.textContent;
+  var ua = navigator.userAgent;
+  var isIOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  var isMobile = isIOS || /Android|Mobi/i.test(ua);
+  var files = null;
+
+  function say(text, ok) {
+    status.hidden = !text; status.textContent = text || "";
+    status.className = "save-status" + (ok ? " ok" : "");
+  }
+  function report() { try { navigator.sendBeacon("/s/" + token + "/saved"); } catch (e) {} }
+  function url(p, dl) { return "/p/" + token + "/" + p.index + "?" + (dl ? "dl=1&" : "") + "v=" + stamp; }
+
+  // iPhone/iPad: the share sheet has "Save Images", which puts the photos straight into Photos.
+  // The photos are fetched first, because the share sheet must open right when the button is tapped.
+  var canShareFiles = false;
+  try {
+    canShareFiles = isIOS && !!navigator.canShare &&
+      navigator.canShare({ files: [new File(["x"], "x.jpg", { type: "image/jpeg" })] });
+  } catch (e) {}
+
+  if (canShareFiles) {
+    label.textContent = "Getting your photos ready…";
+    button.classList.add("busy");
+    Promise.all(photos.map(function (p) {
+      return fetch(url(p, false)).then(function (r) {
+        if (!r.ok) throw new Error("http " + r.status);
+        return r.blob();
+      }).then(function (b) { return new File([b], p.name, { type: b.type || "image/jpeg" }); });
+    })).then(function (list) {
+      files = list;
+      label.textContent = photos.length === 1 ? "Save to my photos" : "Save all " + photos.length + " to my photos";
+      button.classList.remove("busy");
+    }).catch(function () {
+      canShareFiles = false; files = null;
+      label.textContent = original; button.classList.remove("busy");
+    });
+  }
+
+  button.addEventListener("click", function (e) {
+    if (canShareFiles) {
+      e.preventDefault();
+      if (!files) return;  // still getting ready
+      navigator.share({ files: files }).then(function () {
+        report(); say("Saved! Find them in your Photos app.", true);
+      }).catch(function (err) {
+        if (err && err.name === "AbortError") return;
+        say("Couldn't open the save menu. Use the buttons under each photo instead.");
+      });
+      return;
+    }
+    if (!isMobile && photos.length > 1) return;  // computers: the ZIP link does the job
+    // Phones (Android): download each photo; they show up in the gallery under "Downloads".
+    e.preventDefault();
+    photos.forEach(function (p, i) {
+      setTimeout(function () {
+        var a = document.createElement("a");
+        a.href = url(p, true); a.download = p.name; a.style.display = "none";
+        document.body.appendChild(a); a.click(); a.remove();
+      }, i * 700);
+    });
+    say(photos.length === 1 ? "Downloading your photo…" :
+        "Downloading " + photos.length + " photos… If your phone asks, tap Allow.", true);
+    setTimeout(function () {
+      say(photos.length === 1 ? "Done! Check your gallery or Downloads." :
+          "Done! Check your gallery or Downloads.", true);
+    }, photos.length * 700 + 1500);
+  });
+})();
+</script>
+{% endblock %}
