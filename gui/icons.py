@@ -37,6 +37,7 @@ CODES: dict[str, int] = {
     "image": 0xE0F6,
     "images": 0xE5C4,
     "info": 0xE0F9,
+    "heart": 0xE0F2,
     "hourglass": 0xE296,
     "hand": 0xE1D7,
     "sparkles": 0xE412,

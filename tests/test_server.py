@@ -123,20 +123,31 @@ def test_ended_event_links_stop_working(site):
 def test_branding(site):
     phone, tokens, settings, *_ = site
     body = phone.get(f"/s/{tokens['Hana']}")[2]
-    assert b"--accent:" not in body and b"logo-img" not in body
+    assert b"--accent:" not in body  # black and white by default
     settings.brand_color = "#E11D48"
     settings.brand_message = "Thank you for coming!"
-    branding.save_logo(str(next(iter(make_test_photos_dir(site)))))
     body = phone.get(f"/s/{tokens['Hana']}")[2]
-    assert b"--accent: #E11D48" in body and b"Thank you for coming!" in body and b"logo-img" in body
-    assert phone.get("/brand/logo.png")[0] == 200
+    assert b"--accent: #E11D48" in body and b"Thank you for coming!" in body
+    assert phone.get("/brand/logo.png")[0] == 404  # the logo can't be changed any more
     settings.brand_color = "red; } body { display:none"  # anything that isn't a colour is ignored
     assert b"display:none" not in phone.get(f"/s/{tokens['Hana']}")[2]
 
 
-def make_test_photos_dir(site):
-    photos = site[6]
-    return sorted(photos.glob("*.jpg"))
+def test_instagram_popup(site):
+    phone, tokens, settings, *_ = site
+    pages = [f"/s/{tokens['Hana']}", "/"]
+    for path in pages:
+        assert b'id="ig"' not in phone.get(path)[2]  # off by default
+    settings.instagram_enabled = True
+    settings.instagram_url = "@my.studio"
+    for path in pages:  # on: shown on the search page and on the photos page
+        body = phone.get(path)[2]
+        assert b'id="ig"' in body and b"https://www.instagram.com/my.studio/" in body
+        assert b"Can you follow us on Instagram" in body and b'aria-label="Close"' in body
+    settings.instagram_message = "Follow Sara & Omar's photographer"
+    assert b"Follow Sara &amp; Omar&#39;s photographer" in phone.get(pages[0])[2]
+    settings.instagram_url = "not a valid account!"  # a bad account never shows a broken popup
+    assert b'id="ig"' not in phone.get(pages[0])[2]
 
 
 def test_downloads_are_never_stored_by_cloudflare(site):

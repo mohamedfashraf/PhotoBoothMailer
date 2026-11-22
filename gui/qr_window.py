@@ -100,8 +100,6 @@ class QRWindow(ctk.CTkToplevel):
         self.stage.grid(row=0, column=0, sticky="nsew")
         self.content = ctk.CTkFrame(self.stage, fg_color="transparent")
         self.content.place(relx=0.5, rely=0.5, anchor="center")
-        self.logo_label = ctk.CTkLabel(self.content, text="")
-        self._logo_key = None
         self.event_label = ctk.CTkLabel(self.content, text="", font=theme.font(15, "bold"), text_color=theme.MUTED)
         self.event_label.pack()
         self.headline = ctk.CTkLabel(self.content, text="Scan to get your photos", text_color=theme.TEXT,
@@ -166,31 +164,6 @@ class QRWindow(ctk.CTkToplevel):
         # CTkToplevel resets its icon shortly after opening; set ours afterwards.
         self.after(260, self._set_icon)
         self.after(220, self._reveal)
-
-    def _show_logo(self, side: int) -> None:
-        """The event's logo (Settings → Guest page look) above the event name, sized with the QR code."""
-        import branding
-        path = branding.logo_path()
-        if not path.is_file():
-            if self._logo_key is not None:
-                self.logo_label.pack_forget()
-                self._logo_key = None
-            return
-        height = int(max(36, min(110, side / 5)))
-        key = (path.stat().st_mtime, height)
-        if key == self._logo_key:
-            return
-        try:
-            with Image.open(path) as img:
-                img.load()
-                w, h = img.size
-                image = ctk.CTkImage(light_image=img.copy(), size=(max(1, int(w * height / h)), height))
-        except OSError:
-            return
-        self.logo_label.configure(image=image)
-        if not self.logo_label.winfo_manager():
-            self.logo_label.pack(before=self.event_label, pady=(0, 10))
-        self._logo_key = key
 
     def _hide_progress(self) -> None:
         if self.empty_progress.winfo_manager():
@@ -442,7 +415,6 @@ class QRWindow(ctk.CTkToplevel):
         self.qr_card.configure(corner_radius=max(16, side // 16))
         self.qr_label.pack_configure(padx=max(14, side // 16), pady=max(14, side // 16))
         self.event_label.configure(text=event)
-        self._show_logo(side)
         self.headline.configure(text="Get your photos" if shared else "Scan to get your photos",
                                 font=theme.font(int(max(22, min(40, side / 14))), "bold"))
         if shared:

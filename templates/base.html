@@ -13,16 +13,43 @@
 <body>
   <main class="wrap">
     <header class="brand">
-      {% if logo_version %}
-      <img class="logo-img" src="/brand/logo.png?v={{ logo_version }}" alt="">
-      {% else %}
       <span class="logo" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
       </span>
-      {% endif %}
       <span class="event" dir="auto">{{ event_name }}</span>
     </header>
     {% block content %}{% endblock %}
   </main>
+  {% if instagram_url %}
+  <div id="ig" class="ig-backdrop" hidden>
+    <div class="ig-card" role="dialog" aria-modal="true" aria-labelledby="ig-title">
+      <button type="button" class="ig-close" id="ig-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <span class="ig-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+      </span>
+      <h2 id="ig-title" dir="auto">{{ instagram_message }}</h2>
+      <p class="ig-handle">@{{ instagram_handle }}</p>
+      <a class="button" id="ig-follow" href="{{ instagram_url }}" target="_blank" rel="noopener">Follow on Instagram</a>
+      <button type="button" class="ig-later" id="ig-later">Not now, show my photos</button>
+    </div>
+  </div>
+  <script>
+  (function () {
+    // Shown once per phone (per Instagram account), the first time the guest opens the page.
+    var key = "pb-instagram-" + {{ instagram_handle|tojson }};
+    var box = document.getElementById("ig");
+    try { if (localStorage.getItem(key)) return; } catch (e) {}
+    function close() { box.hidden = true; try { localStorage.setItem(key, "1"); } catch (e) {} }
+    box.hidden = false;
+    document.getElementById("ig-close").onclick = close;
+    document.getElementById("ig-later").onclick = close;
+    document.getElementById("ig-follow").addEventListener("click", function () { setTimeout(close, 300); });
+    box.addEventListener("click", function (e) { if (e.target === box) close(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
+  })();
+  </script>
+  {% endif %}
 </body>
 </html>

@@ -25,7 +25,6 @@ def data_dir(tmp_path, monkeypatch):
     folder = tmp_path / "appdata"
     folder.mkdir()
     monkeypatch.setattr(config, "data_dir", lambda: folder)
-    monkeypatch.setattr(branding, "data_dir", lambda: folder)
     return folder
 
 

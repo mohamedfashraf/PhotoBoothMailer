@@ -64,7 +64,7 @@ class GuestsView(ctk.CTkFrame):
 
         # Body: the table and an empty state, stacked; we raise whichever applies.
         body = Card(self)
-        body.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 20))
+        body.grid(row=1, column=0, sticky="nsew", padx=24, pady=(0, 8))
         body.body.grid_configure(padx=6, pady=6)
         body.body.grid_rowconfigure(0, weight=1)
 

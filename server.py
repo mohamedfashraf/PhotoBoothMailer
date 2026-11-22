@@ -186,9 +186,12 @@ class GuestServer:
             color = self.settings.brand_color if branding.valid_color(self.settings.brand_color) else ""
             ctx["brand_css"] = branding.css(color)  # built only from a checked #RRGGBB colour
             ctx["theme_color"] = color or branding.DEFAULT_COLOR
-            logo = branding.logo_path()
-            ctx["logo_version"] = int(logo.stat().st_mtime) if logo.is_file() else 0
             ctx["brand_message"] = self.settings.brand_message.strip()[:200]
+            instagram = branding.instagram_url(self.settings.instagram_url) if self.settings.instagram_enabled else ""
+            ctx["instagram_url"] = instagram
+            ctx["instagram_handle"] = branding.instagram_handle(instagram) if instagram else ""
+            ctx["instagram_message"] = (self.settings.instagram_message.strip()[:120]
+                                        or branding.INSTAGRAM_DEFAULT_MESSAGE)
             return templates.TemplateResponse(request, template, ctx, status_code=status, headers=no_store)
 
         def find(token: str) -> dict | None:
@@ -203,13 +206,6 @@ class GuestServer:
             if not 0 <= index < len(photos) or not os.path.isfile(photos[index]):
                 return None
             return session, photos[index], photos
-
-        @app.get("/brand/logo.png")
-        def logo():
-            path = branding.logo_path()
-            if not path.is_file():
-                return Response(status_code=404)
-            return FileResponse(path, media_type="image/png", headers={"Cache-Control": "public, max-age=300"})
 
         @app.get("/healthz", response_class=PlainTextResponse)
         def healthz():

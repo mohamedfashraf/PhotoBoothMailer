@@ -10,7 +10,10 @@ from pathlib import Path
 
 APP_NAME = "PhotoBooth Share"
 APP_ID = "PhotoBoothMailer"  # internal id (kept so existing installs keep their data)
-APP_VERSION = "1.2.1"  # bump for every release (see CHANGELOG.md and dev/release.py)
+APP_VERSION = "1.3.0"  # bump for every release (see CHANGELOG.md and dev/release.py)
+DEVELOPER = "mohamedfashraf"                       # shown in the app's footer
+DEVELOPER_URL = "https://github.com/mohamedfashraf"
+GITHUB_REPO = "mohamedfashraf/PhotoBoothMailer"    # where "Check for updates" looks for new versions
 
 # ---------------------------------------------------------------- paths
 def app_dir() -> Path:
@@ -71,6 +74,9 @@ class Settings:
     appearance: str = "system"  # system | light | dark
     brand_color: str = ""      # guest page colour, e.g. "#E11D48" ("" = the app's own colour)
     brand_message: str = ""    # optional line on the guest's photos page, e.g. "Thank you for coming!"
+    instagram_enabled: bool = False  # show guests a "follow us on Instagram" popup
+    instagram_url: str = ""          # e.g. "https://www.instagram.com/yourstudio/"
+    instagram_message: str = ""      # popup text; "" = "Can you follow us on Instagram"
     setup_complete: bool = False
 
     @property

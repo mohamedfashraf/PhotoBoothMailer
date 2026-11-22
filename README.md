@@ -79,9 +79,22 @@ Open it from the **QR screen** tab (or double-click a guest). It opens as a smal
 
 ## Your event's look
 
-**Settings → Guest page look**: pick a colour (7 choices), add a logo (e.g. the couple's monogram; a
-PNG with a transparent background looks best) and a short message such as "Thank you for celebrating
-with us!". Guests see them on their phone, and the logo also appears on the QR screen.
+Settings has three sections: **Event** (photos folder, event name), **Guest page** (look, Instagram)
+and **App** (appearance, port, version and updates).
+
+**Settings → Guest page → Look**: the guest page is black and white by default; pick a colour
+(7 choices) if you like, and add a short message such as "Thank you for celebrating with us!".
+
+**Settings → Guest page → Instagram**: turn on the follow popup and type your account (`@yourstudio`
+or your profile link). The first time a guest opens the page they see "Can you follow us on
+Instagram" (or your own text) with a **Follow on Instagram** button. They can close it with **×** or
+"Not now" and still get their photos; it's shown once per phone.
+
+## Updates
+
+**Settings → App → Check for updates** asks GitHub for the newest version. If there is one, press
+**Download** and replace the old `.exe` with the new one (settings and guests are kept, because they're
+saved next to the `.exe`). This only works if the GitHub repository with the releases is public.
 
 ## How guests save their photos
 

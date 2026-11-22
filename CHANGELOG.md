@@ -3,6 +3,19 @@
 Every version of PhotoBooth Share. The newest is at the top. Each version is also a GitHub Release
 with its `.exe` attached.
 
+## 1.3.0 (2026-11-23)
+
+- **Instagram follow popup** (Settings → Guest page → Instagram): turn it on, type your account and,
+  if you like, your own text (default: "Can you follow us on Instagram"). Guests see it once, the first
+  time they open the page, with an × to close it.
+- **Settings split into sections**: Event · Guest page · App.
+- **Check for updates** (Settings → App): shows when a newer version is out, with a Download button.
+- **Footer**: version, "Made by" (opens the developer's GitHub) and the year, bottom right.
+- **Smooth window resizing**: the layout is frozen while you drag the window edge and updated once you
+  let go (each drag step went from ~0.7 s to under 0.1 s).
+- The guest page logo can no longer be changed: it's always the app's own logo.
+- 11 new tests (70 in total).
+
 ## 1.2.1 (2026-11-23)
 
 Caching fixes.

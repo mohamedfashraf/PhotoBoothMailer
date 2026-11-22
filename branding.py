@@ -1,12 +1,8 @@
-"""Event branding: a colour, an optional logo and an optional message on the guest page and QR screen."""
+"""Event branding on the guest page: a colour, an optional message and an optional Instagram popup."""
 from __future__ import annotations
 
 import colorsys
-from pathlib import Path
-
-from PIL import Image, ImageOps
-
-from config import data_dir
+import re
 
 # name -> main colour. The first one (black) is the default.
 PRESETS: dict[str, str] = {
@@ -19,7 +15,6 @@ PRESETS: dict[str, str] = {
     "Plum": "#9333EA",
 }
 DEFAULT_COLOR = PRESETS["Black"]
-LOGO_MAX = 512
 
 
 def _rgb(hex_color: str) -> tuple[float, float, float]:
@@ -75,30 +70,22 @@ def css(color: str) -> str:
             f"@media (prefers-color-scheme: dark) {{ :root {{ {block(p['dark'])} }} }}")
 
 
-def logo_path() -> Path:
-    return data_dir() / "branding" / "logo.png"
+# ---------------------------------------------------------------- Instagram popup
+INSTAGRAM_DEFAULT_MESSAGE = "Can you follow us on Instagram"
+_HANDLE = re.compile(r"^[A-Za-z0-9._]{1,30}$")
 
 
-def save_logo(source: str) -> Path:
-    """Copy (and shrink) the chosen image into the app's folder, so it keeps working if the original moves."""
-    target = logo_path()
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with Image.open(source) as img:
-        img = ImageOps.exif_transpose(img)
-        img = img.convert("RGBA")
-        img.thumbnail((LOGO_MAX, LOGO_MAX))
-        tmp = target.with_suffix(".tmp.png")
-        img.save(tmp, "PNG", optimize=True)
-    tmp.replace(target)
-    return target
+def instagram_handle(text: str) -> str:
+    """'@studio', 'studio', 'instagram.com/studio', 'https://www.instagram.com/studio/?hl=en' -> 'studio'.
+
+    Returns "" if it doesn't look like an Instagram account.
+    """
+    text = (text or "").strip()
+    match = re.match(r"^(?:https?://)?(?:www\.|m\.)?(?:instagram\.com|instagr\.am)/([^/?#\s]+)", text, re.I)
+    handle = match.group(1) if match else text.lstrip("@")
+    return handle if _HANDLE.match(handle) and handle.lower() not in {"p", "reel", "explore", "accounts"} else ""
 
 
-def remove_logo() -> None:
-    try:
-        logo_path().unlink()
-    except FileNotFoundError:
-        pass
-
-
-def has_logo() -> bool:
-    return logo_path().is_file()
+def instagram_url(text: str) -> str:
+    handle = instagram_handle(text)
+    return f"https://www.instagram.com/{handle}/" if handle else ""

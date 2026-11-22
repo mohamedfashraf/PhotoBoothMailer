@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import queue
+import tkinter
+import webbrowser
+from datetime import datetime
 
 import customtkinter as ctk
 
@@ -25,7 +28,8 @@ from gui.setup_wizard import SetupWizard
 from gui.widgets import Card, WrapLabel, icon_tile, secondary_button, shorten_path, show_page, title_label
 
 NAV = [("guests", "Guests", "users"), ("qr", "QR screen", "qr-code"), ("settings", "Settings", "settings")]
-MIN_SIZE = (860, 540)  # in customtkinter units (before Windows display scaling)
+MIN_SIZE = (860, 540)
+RESIZE_SETTLE_MS = 160  # the layout is updated once the window size hasn't changed for this long  # in customtkinter units (before Windows display scaling)
 
 
 def _work_area(root) -> tuple[float, float]:
@@ -74,6 +78,10 @@ class App(ctk.CTk):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self._layout: ctk.CTkFrame | None = None
+        self._frozen_layout: ctk.CTkFrame | None = None
+        self._resize_job = None
+        self._last_size: tuple[int, int] | None = None
+        self.bind("<Configure>", self._on_window_configure, add="+")
         self.views: dict[str, ctk.CTkFrame] = {}
         self.nav_buttons: dict[str, ctk.CTkButton] = {}
 
@@ -126,6 +134,39 @@ class App(ctk.CTk):
         y = int(max(0, (screen_h - height) / 2))
         self.geometry(f"{width}x{height}+{x}+{y}")
 
+    # ------------------------------------------------------------ smooth window resizing
+    def _on_window_configure(self, event) -> None:
+        """While the window is being resized, keep the content at its old size (frozen).
+
+        Re-laying out the whole app for every pixel of a drag is what made resizing lag: Windows has to
+        move and resize thousands of small native windows each time. Frozen, the drag is instant; once
+        the size stops changing the content is laid out once at the new size.
+        """
+        if event.widget is not self:
+            return
+        size = (event.width, event.height)
+        if self._last_size is None or size == self._last_size:
+            self._last_size = size
+            return
+        self._last_size = size
+        layout = self._layout
+        if self._frozen_layout is None and layout is not None and layout.winfo_ismapped():
+            width, height = layout.winfo_width(), layout.winfo_height()
+            layout.grid_remove()
+            tkinter.Frame.place(layout, x=0, y=0, width=width, height=height)  # raw pixels, no rescaling
+            self._frozen_layout = layout
+        if self._resize_job is not None:
+            self.after_cancel(self._resize_job)
+        self._resize_job = self.after(RESIZE_SETTLE_MS, self._unfreeze_layout)
+
+    def _unfreeze_layout(self) -> None:
+        self._resize_job = None
+        layout, self._frozen_layout = self._frozen_layout, None
+        if layout is None or not layout.winfo_exists():
+            return
+        tkinter.Frame.place_forget(layout)
+        layout.grid(row=0, column=0, sticky="nsew")
+
     def _swap_layout(self, build) -> None:
         """Build the next screen completely (not yet visible), then swap it in, then drop the old one.
 
@@ -137,6 +178,9 @@ class App(ctk.CTk):
             self.update_idletasks()
         self.views = {}
         self.nav_buttons = {}
+        if self._resize_job is not None:  # finish any resize first
+            self.after_cancel(self._resize_job)
+            self._unfreeze_layout()
         new = ctk.CTkFrame(self, fg_color=theme.BG, corner_radius=0)
         build(new)
         new.grid(row=0, column=0, sticky="nsew")
@@ -319,7 +363,7 @@ class App(ctk.CTk):
         self.start_watcher()  # restarts only if the folder changed
         self.refresh_sidebar()
         if self.qr_window is not None and self.qr_window.winfo_exists():
-            self.qr_window._render()  # event name or logo may have changed
+            self.qr_window._render()  # the event name may have changed
 
     def _build_main(self, parent) -> None:
         parent.grid_columnconfigure(1, weight=1)
@@ -337,7 +381,7 @@ class App(ctk.CTk):
                   radius=8).grid(row=0, column=0, rowspan=2)
         ctk.CTkLabel(brand, text="PhotoBooth Share", font=theme.font(13, "bold"), text_color=theme.TEXT,
                      anchor="w", height=16).grid(row=0, column=1, sticky="sw", padx=(10, 0))
-        ctk.CTkLabel(brand, text=f"Version {APP_VERSION}", font=theme.font(11), text_color=theme.FAINT,
+        ctk.CTkLabel(brand, text="Photo sharing", font=theme.font(11), text_color=theme.FAINT,
                      anchor="w", height=14).grid(row=1, column=1, sticky="nw", padx=(10, 0))
 
         for i, (key, label, icon_name) in enumerate(NAV, start=1):
@@ -366,6 +410,7 @@ class App(ctk.CTk):
         self.content.grid(row=0, column=1, sticky="nsew")
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(0, weight=1)
+        self._build_footer(self.content)
 
         # Build every screen up front (while still invisible), so switching tabs is instant.
         for key, _, _ in NAV:
@@ -374,6 +419,22 @@ class App(ctk.CTk):
             self.views[key] = view
         self.refresh_sidebar()
         self.select("guests" if self.settings.is_ready else "settings")
+
+    def _build_footer(self, parent) -> None:
+        """Bottom right: version · made by (opens the developer's GitHub) · year."""
+        footer = ctk.CTkFrame(parent, fg_color="transparent", height=22)
+        footer.grid(row=1, column=0, sticky="e", padx=24, pady=(0, 6))
+        small = theme.font(11)
+        ctk.CTkLabel(footer, text=f"v{APP_VERSION}  ·  Made by ", font=small, text_color=theme.FAINT,
+                     height=16).pack(side="left")
+        dev = ctk.CTkLabel(footer, text=config.DEVELOPER, font=theme.font(11, "bold"), text_color=theme.MUTED,
+                           height=16, cursor="hand2")
+        dev.pack(side="left")
+        dev.bind("<Button-1>", lambda _e: webbrowser.open(config.DEVELOPER_URL))
+        dev.bind("<Enter>", lambda _e: dev.configure(text_color=theme.TEXT))
+        dev.bind("<Leave>", lambda _e: dev.configure(text_color=theme.MUTED))
+        ctk.CTkLabel(footer, text=f"  ·  © {datetime.now().year}", font=small, text_color=theme.FAINT,
+                     height=16).pack(side="left")
 
     def refresh_sidebar(self) -> None:
         s = self.settings

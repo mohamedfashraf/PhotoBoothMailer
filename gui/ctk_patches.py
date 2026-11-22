@@ -40,9 +40,64 @@ def apply() -> None:
 
     CTkScrollableFrame.__init__ = _init_with_autohide
 
+    # Resizing the window: customtkinter redraws every rounded widget (on every tab, even hidden ones)
+    # for every pixel the window changes, which made dragging the window edge lag ~0.5 s per step.
+    # Instead, remember which widgets changed size and redraw them all once, shortly after the size
+    # stops changing.
+    from customtkinter.windows.widgets.core_widget_classes.ctk_base_class import CTkBaseClass
+
+    def _update_dimensions_deferred(self, event):
+        width = self._reverse_widget_scaling(event.width)
+        height = self._reverse_widget_scaling(event.height)
+        if round(self._current_width) != round(width) or round(self._current_height) != round(height):
+            self._current_width = width
+            self._current_height = height
+            _redraw_later(self)
+
+    CTkBaseClass._update_dimensions_event = _update_dimensions_deferred
+
 
 def _noop() -> None:
     return None
+
+
+REDRAW_DELAY_MS = 70
+_dirty: dict = {}  # widget id -> widget whose size changed and still needs a redraw
+_flush_job: dict = {}  # toplevel -> pending after() id
+
+
+def _redraw_later(widget) -> None:
+    _dirty[id(widget)] = widget
+    try:
+        root = widget.winfo_toplevel()
+        job = _flush_job.pop(root, None)
+        if job is not None:
+            root.after_cancel(job)
+        _flush_job[root] = root.after(REDRAW_DELAY_MS, lambda: _flush(root))
+    except Exception:  # widget already destroyed
+        _dirty.pop(id(widget), None)
+
+
+def _flush(root) -> None:
+    _flush_job.pop(root, None)
+    widgets = list(_dirty.values())
+    _dirty.clear()
+    for widget in widgets:
+        try:
+            if widget.winfo_exists():
+                widget._draw(no_color_updates=True)
+        except Exception:
+            pass
+
+
+def flush_redraws() -> None:
+    """Draw everything that's waiting right now (used by tests and screenshots)."""
+    for root in list(_flush_job):
+        try:
+            root.after_cancel(_flush_job[root])
+        except Exception:
+            pass
+        _flush(root)
 
 
 def _autohide(frame) -> None:

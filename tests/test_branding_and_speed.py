@@ -1,9 +1,10 @@
-"""Event colours/logo, and the folder memory that keeps pages fast with many phones."""
+"""Event colours, Instagram links, update checks, and the folder memory that keeps pages fast."""
 import time
 
-from PIL import Image
+import pytest
 
 import branding
+import updater
 from config import Settings
 from conftest import make_photos
 from server import GuestServer
@@ -16,15 +17,25 @@ def test_colour_css():
     assert branding.css("red; } body { x") == ""  # only real #RRGGBB colours are used
 
 
-def test_logo_is_copied_and_shrunk(tmp_path):
-    source = tmp_path / "big.png"
-    Image.new("RGBA", (2000, 1000), (200, 0, 0, 128)).save(source)
-    branding.save_logo(str(source))
-    source.unlink()  # the original can move or disappear: the app keeps its own copy
-    with Image.open(branding.logo_path()) as logo:
-        assert max(logo.size) == branding.LOGO_MAX
-    branding.remove_logo()
-    assert not branding.has_logo()
+
+@pytest.mark.parametrize("text, url", [
+    ("@my.studio", "https://www.instagram.com/my.studio/"),
+    ("my_studio", "https://www.instagram.com/my_studio/"),
+    ("instagram.com/studio", "https://www.instagram.com/studio/"),
+    ("https://www.instagram.com/studio/?hl=en", "https://www.instagram.com/studio/"),
+    ("https://instagram.com/p/abc123", ""),  # a post, not an account
+    ("bad name", ""),
+    ("", ""),
+])
+def test_instagram_links(text, url):
+    assert branding.instagram_url(text) == url
+
+
+@pytest.mark.parametrize("newest, current, newer", [
+    ("1.2.2", "1.2.1", True), ("v1.10.0", "1.9.9", True), ("1.2.1", "1.2.1", False), ("1.0.0", "1.2.1", False),
+])
+def test_update_version_compare(newest, current, newer):
+    assert updater.is_newer(newest, current) is newer
 
 
 def test_folder_is_not_reread_for_every_request(tmp_path, db, monkeypatch):
